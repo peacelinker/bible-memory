@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="성구 암송">
+    <meta name="theme-color" content="#4338ca">
+    <title>성구 암송 PWA</title>
+    
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3389/3389081.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .scrollable-content {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <div id="login-screen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center border border-slate-100">
+            <div class="inline-flex p-4 bg-indigo-50 rounded-full text-indigo-600 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">성구 암송 프로그램</h1>
+            <p class="text-xs text-gray-500 mb-6">보안 비밀번호를 입력해주세요.</p>
+            
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <input 
+                    type="password" id="password-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" 
+                    class="w-full px-4 py-3.5 border border-slate-200 rounded-2xl text-center text-3xl font-bold tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4 bg-slate-50 transition-all placeholder:tracking-normal placeholder:font-normal placeholder:text-lg"
+                    autocomplete="off" required
+                >
+                <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-4 rounded-2xl hover:bg-indigo-700 transition-all active:scale-[0.98] shadow-lg shadow-indigo-100">
+                    장하기
+                </button>
+            </form>
+            <p id="login-error" class="text-red-500 text-xs mt-3 hidden font-semibold">⚠️ 비밀번호가 일치하지 않습니다.</p>
+        </div>
+    </div>
+
+    <div id="pwa-install-banner" class="fixed bottom-4 left-4 right-4 bg-slate-900 text-white rounded-2xl p-4 shadow-2xl z-40 hidden flex items-center justify-between border border-slate-800">
+        <div class="flex items-center gap-3">
+            <img src="https://cdn-icons-png.flaticon.com/512/3389/3389081.png" class="w-10 h-10 rounded-lg" alt="앱 아이콘">
+            <div>
+                <p class="text-sm font-bold">홈 화면에 추가해 보세요!</p>
+                <p class="text-[10px] text-slate-400">데이터 소모 없이 진짜 앱처럼 열립니다.</p>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="dismissPWAInstall()" class="text-xs text-slate-400 px-2 py-1">닫기</button>
+            <button id="pwa-install-btn" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold">설치</button>
+        </div>
+    </div>
+
+    <div id="app-screen" class="hidden flex-1 flex flex-col h-full overflow-hidden">
+        <header class="bg-white border-b border-slate-100 px-4 py-3.5 shrink-0">
+            <div class="max-w-md mx-auto flex justify-between items-center">
+                <h1 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <span class="text-xl">📖</span> 성구 암송 <span class="text-xs font-normal text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">개역한글</span>
+                </h1>
+                <button onclick="logout()" class="text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-2 rounded-xl transition-all active:scale-95">
+                    🔒 잠금
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 scrollable-content max-w-md w-full mx-auto p-4 flex flex-col gap-4 pb-12">
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100/80">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">암송 범위 대그룹</label>
+                <div class="relative">
+                    <select id="passage-select" onchange="changePassage()" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none cursor-pointer">
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div id="sub-passage-tabs" class="flex flex-wrap gap-2 mt-3.5"></div>
+            </div>
+
+            <div class="bg-slate-200/60 p-1 rounded-2xl flex text-[11px] font-black tracking-tight shrink-0 gap-0.5">
+                <button onclick="setMode('typing')" id="mode-btn-typing" class="flex-1 py-2.5 rounded-xl text-center transition-all bg-white text-indigo-600 shadow-sm">✍️ 타이핑</button>
+                <button onclick="setMode('josa')" id="mode-btn-josa" class="flex-1 py-2.5 rounded-xl text-center transition-all text-slate-600 hover:text-slate-900">🧩 조사</button>
+                <button onclick="setMode('eomi')" id="mode-btn-eomi" class="flex-1 py-2.5 rounded-xl text-center transition-all text-slate-600 hover:text-slate-900">🎬 어미</button>
+                <button onclick="setMode('error')" id="mode-btn-error" class="flex-1 py-2.5 rounded-xl text-center transition-all text-slate-600 hover:text-slate-900">⚡ 오류찾기</button>
+                <button onclick="setMode('select')" id="mode-btn-select" class="flex-1 py-2.5 rounded-xl text-center transition-all text-slate-600 hover:text-slate-900">⚖️ 원문판별</button>
+            </div>
+
+            <div id="hint-panel" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100/80 flex flex-col gap-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">힌트 가이드</span>
+                    <div class="flex gap-1 bg-slate-100 p-1 rounded-xl">
+                        <button onclick="toggleHint('show')" id="btn-hint-show" class="text-xs px-2.5 py-1.5 rounded-lg transition-all">전체</button>
+                        <button onclick="toggleHint('initial')" id="btn-hint-initial" class="text-xs px-2.5 py-1.5 rounded-lg transition-all">초성</button>
+                        <button onclick="toggleHint('hide')" id="btn-hint-hide" class="text-xs px-2.5 py-1.5 rounded-lg transition-all">숨김</button>
+                    </div>
+                </div>
+                <div id="guide-box" class="p-4 bg-slate-50 rounded-xl min-h-[5.5rem] flex items-center justify-center text-center">
+                    <p id="guide-text" class="text-slate-700 font-semibold leading-relaxed select-text break-all text-sm sm:text-base"></p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100/80 flex flex-col gap-3 min-h-[18rem]">
+                <div class="flex justify-between items-center">
+                    <span id="interaction-title" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">실시간 입력 확인</span>
+                    <span id="match-status" class="text-[10px] font-extrabold px-2.5 py-1 rounded-full transition-colors">작성 대기</span>
+                </div>
+
+                <div id="zone-typing" class="flex flex-col gap-3 flex-1">
+                    <div id="comparison-display" class="p-4 bg-white text-slate-800 border border-slate-200/80 rounded-xl h-24 overflow-y-auto text-sm sm:text-base leading-relaxed break-words whitespace-pre-wrap font-semibold tracking-wide shadow-inner">
+                        <span class="text-slate-400 text-xs font-normal">아래 입력창에 타이핑을 시작하면 실시간 분석이 표시됩니다.</span>
+                    </div>
+                    <div class="flex flex-col overflow-hidden h-32 mt-1">
+                        <textarea 
+                            id="user-input" oninput="compareText()" placeholder="이곳에 성구를 정확히 한 글자씩 타이핑하세요..." 
+                            class="w-full h-full p-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-sm sm:text-base leading-relaxed bg-slate-50 focus:bg-white transition-all text-slate-800"
+                            autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
+                        ></textarea>
+                    </div>
+                    <button onclick="clearInput()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3.5 rounded-xl transition-all active:scale-[0.98] text-xs sm:text-sm">
+                        지우고 처음부터 다시 쓰기
+                    </button>
+                </div>
+
+                <div id="zone-quiz" class="hidden flex flex-col flex-1 gap-4">
+                    <div id="quiz-sentence-box" class="p-4 bg-slate-50 border border-slate-100 rounded-2xl min-h-[6rem] flex flex-wrap items-center justify-center text-center font-bold text-slate-800 text-sm sm:text-base leading-relaxed gap-y-2">
+                    </div>
+                    
+                    <div id="quiz-options-box" class="grid grid-cols-3 gap-2 mt-auto">
+                    </div>
+
+                    <div id="quiz-action-box" class="mt-2">
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="bg-white border-t border-slate-100 py-3 text-center text-[10px] text-slate-400 font-medium shrink-0">
+            개역한글 성경암송 PWA • 스마트 정밀 학습 시스템
+        </footer>
+    </div>
+
+    <div id="success-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-xs rounded-3xl shadow-2xl p-6 text-center border border-slate-50">
+            <div class="inline-flex p-3 bg-emerald-100 text-emerald-600 rounded-full mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">정답입니다! 🎉</h3>
+            <p class="text-xs text-slate-500 mb-5">훌륭합니다. 완벽하게 맞추셨습니다.</p>
+            <button onclick="closeSuccessModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl transition-all active:scale-95">
+                다음 구절 도전하기
+            </button>
+        </div>
+    </div>
+
+    <div id="complete-all-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center border border-slate-50">
+            <div class="inline-flex p-4 bg-amber-100 text-amber-600 rounded-full mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-1">🎉 모든 암송 구절 완료!</h3>
+            <p class="text-xs text-slate-500 leading-relaxed mb-6">
+                선택하신 세트의 모든 구절을 정복하셨습니다!<br>
+                처음으로 이동해서 복습을 진행하시겠습니까?
+            </p>
+            <button onclick="restartFromBeginning()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl transition-all active:scale-95">
+                처음부터 다시 연습하기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 스마트 자동 가동 서비스 워커 구조 고도화 (v7 Engine)
+        (function() {
+            const manifest = {
+                "name": "성구 암송 프로그램", "short_name": "성구 암송", "start_url": ".", "display": "standalone",
+                "background_color": "#ffffff", "theme_color": "#4338ca", "orientation": "portrait",
+                "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/3389/3389081.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]
+            };
+            const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+            const manifestLink = document.createElement('link');
+            manifestLink.setAttribute('rel', 'manifest'); manifestLink.setAttribute('href', URL.createObjectURL(manifestBlob));
+            document.head.appendChild(manifestLink);
+
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    const CACHE_NAME = 'bible-memo-v7';
+                    self.addEventListener('install', e => { self.skipWaiting(); });
+                    self.addEventListener('activate', e => {
+                        self.clients.claim();
+                        e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(key => { if(key !== CACHE_NAME) return caches.delete(key); }))));
+                    });
+                    self.addEventListener('fetch', e => {
+                        e.respondWith(fetch(e.request).then(res => {
+                            const resClone = res.clone(); caches.open(CACHE_NAME).then(cache => cache.put(e.request, resClone)); return res;
+                        }).catch(() => caches.match(e.request)));
+                    });
+                `;
+                const swBlob = new Blob([swCode], {type: 'application/javascript'});
+                navigator.serviceWorker.register(URL.createObjectURL(swBlob)).then(reg => {
+                    reg.addEventListener('updatefound', () => {
+                        const w = reg.installing;
+                        w.addEventListener('statechange', () => { if (w.state === 'installed' && navigator.serviceWorker.controller) window.location.reload(); });
+                    });
+                }).catch(() => {});
+            }
+        })();
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; document.getElementById('pwa-install-banner').classList.remove('hidden'); });
+        document.getElementById('pwa-install-btn')?.addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; document.getElementById('pwa-install-banner').classList.add('hidden'); } });
+        function dismissPWAInstall() { document.getElementById('pwa-install-banner').classList.add('hidden'); }
+
+        // --- 💾 성구 원본 데이터 세트 ---
+        const BIBLE_DATA = {
+            "계 1:1-3": [
+                { ref: "계 1:1", text: "예수 그리스도의 계시라 이는 하나님이 그에게 주사 반드시 속히 될 일을 그 종들에게 보이시려고 그 천사를 그 종 요한에게 보내어 지시하신 것이라" },
+                { ref: "계 1:2", text: "요한은 하나님의 말씀과 예수 그리스도의 증거 곧 자기의 본 것을 다 증거하였느니라" },
+                { ref: "계 1:3", text: "이 예언의 말씀을 읽는 자와 듣는 자들과 그 가운데 기록한 것을 지키는 자들이 복이 있나니 때가 가까움이라" }
+            ],
+            "계 7:1-4": [
+                { ref: "계 7:1", text: "이 일 후에 내가 네 천사가 땅 네 모퉁이에 선 것을 보니 땅의 사방의 바람을 붙잡아 바람으로 하여금 땅에나 바다에나 각종 나무에 불지 못하게 하더라" },
+                { ref: "계 7:2", text: "또 보매 다른 천사가 살아 계신 하나님의 인을 가지고 해 돋는 데로부터 올라와서 땅과 바다를 해롭게 할 권세를 얻은 네 천사를 향하여 큰 소리로 외쳐" },
+                { ref: "계 7:3", text: "가로되 우리가 우리 하나님의 종들의 이마에 인치기까지 땅이나 바다나 나무나 해하지 말라 하더라" },
+                { ref: "계 7:4", text: "내가 인맞은 자의 수를 들으니 이스라엘 자손의 각 지파 중에서 인맞은 자들이 십 사만 사천이니" }
+            ],
+            "계 10:10-11": [
+                { ref: "계 10:10", text: "내가 천사의 손에서 작은 책을 갖다 먹어버리니 내 입에는 꿀 같이 다나 먹은 후에 내 배에서는 쓰게 되더라" },
+                { ref: "계 10:11", text: "저가 내게 말하기를 네가 많은 백성과 나라와 방언과 임금에게 다시 예언하여야 하리라 하더라" }
+            ],
+            "계 20:4-6": [
+                { ref: "계 20:4", text: "또 내가 보좌들을 보니 거기 앉은 자들이 있어 심판하는 권세를 받았더라 또 내가 보니 예수의 증거와 하나님의 말씀을 인하여 목 베임을 받은 자의 영혼들과 또 짐승과 그의 우상에게 경배하지도 아니하고 이마와 손에 그의 표를 받지도 아니한 자들이 살아서 그리스도로 더불어 천년 동안 왕노릇 하니" },
+                { ref: "계 20:5", text: "（그 나머지 죽은 자들은 그 천년이 차기까지 살지 못하더라） 이는 첫째 부활이라" },
+                { ref: "계 20:6", text: "이 첫째 부활에 참예하는 자들은 복이 있고 거룩하도다 둘째 사망이 그들을 다스리는 권세가 없고 도리어 그들이 하나님과 그리스도로 제사장이 되어 천년 동안 그리스도로 더불어 왕노릇 하리라" }
+            ],
+            "계 22:18-19": [
+                { ref: "계 22:18", text: "내가 이 책의 예언의 말씀을 듣는 각인에게 증거하노니 만일 누구든지 이것들 외에 더하면 하나님이 이 책에 기록된 재앙들을 그에게 더하실 터이요" },
+                { ref: "계 22:19", text: "만일 누구든지 이 책의 예언의 말씀에서 제하여 버리면 하나님이 이 책에 기록된 생명나무와 및 거룩한 성에 참예함을 제하여 버리시리라" }
+            ]
+            // 💡 [팁] 새로운 퀴즈를 넣으실 때는 위 계 22:18-19 대괄호 닫히는 부분 뒤에 쉼표(,)를 찍고 
+            // 아래 양식처럼 똑같이 적어주시면 무제한으로 연동됩니다.
+        };
+
+        // 스마트 분석용 토씨 데이터 사전 정의
+        const JOSA_POOL = ['께서', '에서', '에게', '으로', '보다', '처럼', '이', '가', '은', '는', '을', '를', '에', '의', '과', '와', '로', '도', '만'];
+        const EOMI_POOL = ['하시니라', '하셨느니라', '하였더라', '하리라', '하느니라', '하였느니라', '할찌니라', '하라시니라', '하심이니라', '하심이라', '가까움이라', '증거하였느니라', '있나니', '되더라', '하라', '느니라', '니라', '더라', '도다'];
+
+        let currentGroupKey = "계 1:1-3";
+        let currentSubIndex = 0;
+        let currentTargetText = "";
+        let hintMode = "hide";
+        let currentMode = "typing"; 
+
+        let parsedQuizWords = [];
+        let userSelectedAnswers = [];
+        let currentlyActiveBlankIdx = 0;
+        let targetedWrongWordIdx = -1;
+
+        function handleLogin(event) {
+            event.preventDefault();
+            if (document.getElementById("password-input").value === "0314") {
+                document.getElementById("login-screen").classList.add("hidden");
+                document.getElementById("app-screen").classList.remove("hidden");
+                initApp();
+            } else {
+                document.getElementById("login-error").classList.remove("hidden");
+                document.getElementById("password-input").value = ""; document.getElementById("password-input").focus();
+            }
+        }
+
+        function logout() {
+            document.getElementById("password-input").value = ""; document.getElementById("login-error").classList.add("hidden");
+            document.getElementById("login-screen").classList.remove("hidden"); document.getElementById("app-screen").classList.add("hidden");
+        }
+
+        function initApp() {
+            const selectEl = document.getElementById("passage-select"); selectEl.innerHTML = "";
+            Object.keys(BIBLE_DATA).forEach(key => {
+                const opt = document.createElement("option"); opt.value = key; opt.textContent = key; selectEl.appendChild(opt);
+            });
+            currentGroupKey = Object.keys(BIBLE_DATA)[0]; currentSubIndex = 0;
+            setMode('typing'); toggleHint('hide'); loadPassage();
+        }
+
+        function changePassage() { currentSubIndex = 0; loadPassage(); }
+
+        function loadPassage() {
+            currentGroupKey = document.getElementById("passage-select").value;
+            const passages = BIBLE_DATA[currentGroupKey];
+            currentTargetText = passages[currentSubIndex].text;
+
+            const tabsContainer = document.getElementById("sub-passage-tabs"); tabsContainer.innerHTML = "";
+            passages.forEach((p, idx) => {
+                const btn = document.createElement("button"); btn.textContent = p.ref;
+                btn.className = `px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                    idx === currentSubIndex ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+                }`;
+                btn.onclick = () => { currentSubIndex = idx; loadPassage(); };
+                tabsContainer.appendChild(btn);
+            });
+            
+            updateGuide();
+            refreshCurrentModeView();
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            ['typing', 'josa', 'eomi', 'error', 'select'].forEach(m => {
+                const b = document.getElementById('mode-btn-' + m);
+                if(m === mode) b.className = "flex-1 py-2.5 rounded-xl text-center transition-all bg-white text-indigo-600 shadow-sm";
+                else b.className = "flex-1 py-2.5 rounded-xl text-center transition-all text-slate-500 hover:text-slate-800";
+            });
+
+            const tPanel = document.getElementById("hint-panel");
+            if (mode === 'typing') tPanel.classList.remove("hidden");
+            else tPanel.classList.add("hidden");
+
+            refreshCurrentModeView();
+        }
+
+        function refreshCurrentModeView() {
+            const zTyping = document.getElementById("zone-typing");
+            const zQuiz = document.getElementById("zone-quiz");
+            const iTitle = document.getElementById("interaction-title");
+
+            if (currentMode === 'typing') {
+                zTyping.classList.remove("hidden"); zQuiz.classList.add("hidden");
+                iTitle.textContent = "실시간 입력 확인 (띄어쓰기 무관)";
+                clearInput();
+            } else {
+                zTyping.classList.add("hidden"); zQuiz.classList.remove("hidden");
+                if (currentMode === 'josa') { iTitle.textContent = "조사 정밀 퀴즈"; buildBlankQuizEngine('josa'); }
+                else if (currentMode === 'eomi') { iTitle.textContent = "어미 집중 퀴즈"; buildBlankQuizEngine('eomi'); }
+                else if (currentMode === 'error') { iTitle.textContent = "토씨 오류 찾기 퀴즈"; buildErrorQuizEngine(); }
+                else if (currentMode === 'select') { iTitle.textContent = "원문 판별 퀴즈"; buildSelectCardQuizEngine(); }
+            }
+        }
+
+        // --- 🧩 [퀴즈 엔진 1 & 2] 조사 / 어미 빈칸 매칭 생성기 ---
+        function buildBlankQuizEngine(type) {
+            const words = currentTargetText.split(' ');
+            const targetPool = type === 'josa' ? JOSA_POOL : EOMI_POOL;
+
+            parsedQuizWords = words.map(word => {
+                let clean = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()（）]/g,"");
+                let targetSuffix = "";
+                for (let s of targetPool) {
+                    if (clean.endsWith(s)) { targetSuffix = s; break; }
+                }
+                if (targetSuffix) {
+                    return {
+                        stem: word.substring(0, word.indexOf(targetSuffix)),
+                        suffix: targetSuffix,
+                        tail: word.substring(word.indexOf(targetSuffix) + targetSuffix.length),
+                        isBlank: true
+                    };
+                }
+                return { stem: word, suffix: '', tail: '', isBlank: false };
+            });
+
+            userSelectedAnswers = []; currentlyActiveBlankIdx = -1;
+            let bCount = 0;
+            parsedQuizWords.forEach(item => {
+                if (item.isBlank) {
+                    item.blankIdx = bCount;
+                    if (currentlyActiveBlankIdx === -1) currentlyActiveBlankIdx = bCount;
+                    bCount++;
+                }
+            });
+
+            resetMatchStatusText();
+            renderBlankQuizScreen(type);
+        }
+
+        function renderBlankQuizScreen(type) {
+            const sBox = document.getElementById("quiz-sentence-box");
+            let html = "";
+            
+            parsedQuizWords.forEach(item => {
+                if (item.isBlank) {
+                    const filled = userSelectedAnswers[item.blankIdx] !== undefined;
+                    const txt = filled ? userSelectedAnswers[item.blankIdx] : " __ ";
+                    const active = item.blankIdx === currentlyActiveBlankIdx;
+                    html += `<span onclick="changeActiveBlank(${item.blankIdx})" class="inline-block px-2 py-0.5 mx-0.5 rounded-lg border-b-2 font-black text-sm sm:text-base cursor-pointer transition-all ${
+                        active ? "bg-indigo-100 border-indigo-600 text-indigo-700 ring-2 ring-indigo-300" : filled ? "bg-slate-100 border-indigo-400 text-indigo-600" : "bg-slate-200 border-slate-400 text-slate-500"
+                    }">${txt}</span>${item.tail} `;
+                } else {
+                    html += `<span>${item.stem}</span> `;
+                }
+            });
+            sBox.innerHTML = html;
+
+            const oBox = document.getElementById("quiz-options-box"); oBox.innerHTML = "";
+            oBox.className = "grid grid-cols-3 sm:grid-cols-4 gap-2 mt-auto";
+            
+            const pool = type === 'josa' ? ['이', '가', '은', '는', '을', '를', '에', '의', '께서', '에서', '과', '와'] : ['하시니라', '하셨느니라', '하였더라', '하리라', '하느니라', '할찌니라', '하라', '있나니'];
+            pool.forEach(opt => {
+                const b = document.createElement("button");
+                b.className = "bg-white hover:bg-slate-50 active:scale-95 border border-slate-200 text-slate-700 font-bold py-3 rounded-xl text-xs sm:text-sm shadow-sm transition-all";
+                b.textContent = opt; b.onclick = () => injectWordToBlank(opt, type); oBox.appendChild(b);
+            });
+
+            const aBox = document.getElementById("quiz-action-box");
+            aBox.innerHTML = `<button onclick="verifyBlankQuizAnswers('${type}')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl text-xs sm:text-sm transition-all shadow-md">정답 확인하기</button>`;
+        }
+
+        function changeActiveBlank(idx) { currentlyActiveBlankIdx = idx; refreshBlankQuizLayoutOnly(); }
+        
+        function refreshBlankQuizLayoutOnly() {
+            const sBox = document.getElementById("quiz-sentence-box"); let html = "";
+            parsedQuizWords.forEach(item => {
+                if (item.isBlank) {
+                    const filled = userSelectedAnswers[item.blankIdx] !== undefined; const txt = filled ? userSelectedAnswers[item.blankIdx] : " __ ";
+                    const active = item.blankIdx === currentlyActiveBlankIdx;
+                    html += `<span onclick="changeActiveBlank(${item.blankIdx})" class="inline-block px-2 py-0.5 mx-0.5 rounded-lg border-b-2 font-black text-sm sm:text-base cursor-pointer transition-all ${
+                        active ? "bg-indigo-100 border-indigo-600 text-indigo-700 ring-2 ring-indigo-300" : filled ? "bg-slate-100 border-indigo-400 text-indigo-600" : "bg-slate-200 border-slate-400 text-slate-500"
+                    }">${txt}</span>${item.tail} `;
+                } else { html += `<span>${item.stem}</span> `; }
+            });
+            sBox.innerHTML = html;
+        }
+
+        function injectWordToBlank(val, type) {
+            if (currentlyActiveBlankIdx === -1) return;
+            userSelectedAnswers[currentlyActiveBlankIdx] = val;
+            let total = parsedQuizWords.filter(i => i.isBlank).length;
+            currentlyActiveBlankIdx = (currentlyActiveBlankIdx + 1) % total;
+            renderBlankQuizScreen(type);
+        }
+
+        function verifyBlankQuizAnswers(type) {
+            let pass = true; let count = 0;
+            parsedQuizWords.forEach(item => {
+                if (item.isBlank) {
+                    if(userSelectedAnswers[item.blankIdx] !== item.suffix) pass = false;
+                    count++;
+                }
+            });
+            const status = document.getElementById("match-status");
+            if (pass && count > 0) {
+                status.textContent = "만점 통과!"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
+                showSuccessModal();
+            } else {
+                status.textContent = "오답 감지!"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-rose-100 text-rose-600";
+                const sBox = document.getElementById("quiz-sentence-box"); let html = "";
+                parsedQuizWords.forEach(item => {
+                    if (item.isBlank) {
+                        const correct = userSelectedAnswers[item.blankIdx] === item.suffix; const txt = userSelectedAnswers[item.blankIdx] || " ? ";
+                        html += `<span onclick="changeActiveBlank(${item.blankIdx})" class="inline-block px-2 py-0.5 mx-0.5 rounded-lg border-b-2 font-black text-sm sm:text-base cursor-pointer transition-all ${
+                            correct ? "bg-emerald-50 border-emerald-500 text-emerald-700" : "bg-rose-50 border-rose-400 text-rose-600 ring-1 ring-rose-200"
+                        }">${txt}</span>${item.tail} `;
+                    } else { html += `<span>${item.stem}</span> `; }
+                });
+                sBox.innerHTML = html;
+            }
+        }
+
+        // --- ⚡ [퀴즈 엔진 3] 토씨 오류 찾기 생성기 (복원 완료) ---
+        function buildErrorQuizEngine() {
+            const words = currentTargetText.split(' ');
+            let list = [];
+            
+            parsedQuizWords = words.map((word, idx) => {
+                let clean = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()（）]/g,"");
+                let match = "";
+                for (let s of [...EOMI_POOL, ...JOSA_POOL]) {
+                    if (clean.endsWith(s)) { match = s; break; }
+                }
+                if (match) {
+                    list.push(idx);
+                    return { stem: word.substring(0, word.indexOf(match)), suffix: match, tail: word.substring(word.indexOf(match) + match.length), isCorrupted: false, original: word };
+                }
+                return { stem: word, suffix: '', tail: '', isCorrupted: false, original: word };
+            });
+
+            if (list.length === 0) {
+                document.getElementById("quiz-sentence-box").innerHTML = "<p class='text-slate-400 text-xs'>해당 구절은 퀴즈 구조를 지원하지 않습니다.</p>";
+                return;
+            }
+
+            targetedWrongWordIdx = list[Math.floor(Math.random() * list.length)];
+            const target = parsedQuizWords[targetedWrongWordIdx];
+            
+            let mock = "";
+            if (JOSA_POOL.includes(target.suffix)) {
+                let f = JOSA_POOL.filter(j => j !== target.suffix);
+                mock = f[Math.floor(Math.random() * f.length)];
+            } else {
+                let f = EOMI_POOL.filter(e => e !== target.suffix);
+                mock = f[Math.floor(Math.random() * f.length)];
+            }
+            target.corruptedWord = target.stem + mock + target.tail;
+            
+            resetMatchStatusText();
+            renderErrorQuizScreen();
+        }
+
+        function renderErrorQuizScreen() {
+            const sBox = document.getElementById("quiz-sentence-box");
+            let html = "";
+            parsedQuizWords.forEach((item, idx) => {
+                let displayWord = (idx === targetedWrongWordIdx) ? item.corruptedWord : item.original;
+                html += `<span onclick="verifyErrorChoice(${idx})" class="cursor-pointer hover:bg-slate-100 p-1 rounded transition-all">${displayWord}</span> `;
+            });
+            sBox.innerHTML = html;
+
+            const oBox = document.getElementById("quiz-options-box"); oBox.innerHTML = "";
+            oBox.innerHTML = `<p class="col-span-3 text-center text-xs text-slate-400 font-medium">위 성구 중에서 잘못 변형된 토씨(조사/어미)가 쓰인 단어를 손가락으로 클릭하세요.</p>`;
+            
+            const aBox = document.getElementById("quiz-action-box"); aBox.innerHTML = "";
+        }
+
+        function verifyErrorChoice(idx) {
+            const status = document.getElementById("match-status");
+            if (idx === targetedWrongWordIdx) {
+                status.textContent = "오류 발견!"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
+                showSuccessModal();
+            } else {
+                status.textContent = "정상 단어"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-rose-100 text-rose-600";
+            }
+        }
+
+        // --- ⚖️ [퀴즈 엔진 4] 원문 판별 퀴즈 (복원 완료) ---
+        function buildSelectCardQuizEngine() {
+            const correctText = currentTargetText;
+            let fakeText = correctText;
+            const words = correctText.split(' ');
+            let validIndices = [];
+
+            words.forEach((w, i) => {
+                for(let j of [...JOSA_POOL, ...EOMI_POOL]) {
+                    if(w.includes(j)) { validIndices.push({idx: i, suffix: j}); break; }
+                }
+            });
+            
+            if(validIndices.length > 0) {
+                let targetIdxObj = validIndices[Math.floor(Math.random() * validIndices.length)];
+                let wordToChange = words[targetIdxObj.idx];
+                let pool = JOSA_POOL.includes(targetIdxObj.suffix) ? JOSA_POOL : EOMI_POOL;
+                let alt = pool.filter(p => p !== targetIdxObj.suffix)[Math.floor(Math.random() * (pool.length - 1))];
+                words[targetIdxObj.idx] = wordToChange.replace(targetIdxObj.suffix, alt);
+                fakeText = words.join(' ');
+            } else {
+                fakeText = correctText + "니라";
+            }
+
+            const sBox = document.getElementById("quiz-sentence-box");
+            sBox.innerHTML = "<p class='text-xs text-slate-500 text-center font-medium'>아래의 두 보기 카드를 정독하고, 성경 원문문장과 완벽히 일치하는 카드를 선택하세요.</p>";
+
+            const oBox = document.getElementById("quiz-options-box"); oBox.innerHTML = "";
+            oBox.className = "flex flex-col gap-2 w-full col-span-3";
+
+            let cards = [
+                { text: correctText, isCorrect: true },
+                { text: fakeText, isCorrect: false }
+            ];
+            if(Math.random() > 0.5) cards.reverse();
+
+            cards.forEach(card => {
+                const b = document.createElement("button");
+                b.className = "w-full text-left bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold p-4 rounded-xl text-xs sm:text-sm shadow-sm transition-all leading-relaxed";
+                b.textContent = card.text;
+                b.onclick = () => {
+                    const status = document.getElementById("match-status");
+                    if(card.isCorrect) {
+                        status.textContent = "원문 확인!"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
+                        showSuccessModal();
+                    } else {
+                        status.textContent = "변형문 선택"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-rose-100 text-rose-600";
+                    }
+                };
+                oBox.appendChild(b);
+            });
+            
+            const aBox = document.getElementById("quiz-action-box"); aBox.innerHTML = "";
+            resetMatchStatusText();
+        }
+
+        // --- ✍️ 타이핑 및 실시간 유틸리티 시스템 로직 ---
+        function compareText() {
+            const input = document.getElementById("user-input").value;
+            const display = document.getElementById("comparison-display");
+            const status = document.getElementById("match-status");
+
+            let html = "";
+            let isMatch = true;
+
+            for (let i = 0; i < input.length; i++) {
+                if (input[i] === currentTargetText[i]) {
+                    html += `<span class="text-indigo-600">${input[i]}</span>`;
+                } else {
+                    html += `<span class="text-rose-500 bg-rose-50 underline">${input[i]}</span>`;
+                    isMatch = false;
+                }
+            }
+
+            if (input.length === 0) {
+                display.innerHTML = '<span class="text-slate-400 text-xs font-normal">아래 입력창에 타이핑을 시작하면 실시간 분석이 표시됩니다.</span>';
+                status.textContent = "작성 대기"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-slate-100 text-slate-500";
+            } else {
+                display.innerHTML = html + `<span class="text-slate-300 animate-pulse">|</span>`;
+                if (input === currentTargetText) {
+                    status.textContent = "완벽 일치!"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
+                    showSuccessModal();
+                } else if (isMatch) {
+                    status.textContent = "작성 중..."; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700";
+                } else {
+                    status.textContent = "오류 발견"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-rose-100 text-rose-600";
+                }
+            }
+        }
+
+        function clearInput() {
+            document.getElementById("user-input").value = "";
+            compareText();
+        }
+
+        function updateGuide() {
+            const gText = document.getElementById("guide-text");
+            if (hintMode === "show") {
+                gText.textContent = currentTargetText;
+            } else if (hintMode === "initial") {
+                gText.textContent = makeInitialConsonants(currentTargetText);
+            } else {
+                gText.textContent = "🔒 힌트가 숨겨져 있습니다. (타이핑 모드 전용)";
+            }
+        }
+
+        function toggleHint(mode) {
+            hintMode = mode;
+            ['show', 'initial', 'hide'].forEach(m => {
+                const b = document.getElementById('btn-hint-' + m);
+                if(m === mode) b.className = "text-xs px-2.5 py-1.5 rounded-lg transition-all bg-white text-indigo-600 shadow-sm font-bold";
+                else b.className = "text-xs px-2.5 py-1.5 rounded-lg transition-all text-slate-500 hover:text-slate-800";
+            });
+            updateGuide();
+        }
+
+        function makeInitialConsonants(text) {
+            const cho = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+            let result = "";
+            for (let i = 0; i < text.length; i++) {
+                let code = text.charCodeAt(i) - 44032;
+                if (code >= 0 && code <= 11172) {
+                    result += cho[Math.floor(code / 588)];
+                } else {
+                    result += text[i];
+                }
+            }
+            return result;
+        }
+
+        function resetMatchStatusText() {
+            const status = document.getElementById("match-status");
+            status.textContent = "작성 대기"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-slate-100 text-slate-500";
+        }
+
+        function showSuccessModal() {
+            document.getElementById("success-modal").classList.remove("hidden");
+        }
+
+        function closeSuccessModal() {
+            document.getElementById("success-modal").classList.add("hidden");
+            const passages = BIBLE_DATA[currentGroupKey];
+            if (currentSubIndex < passages.length - 1) {
+                currentSubIndex++;
+                loadPassage();
+            } else {
+                const keys = Object.keys(BIBLE_DATA);
+                const currentGroupIdx = keys.indexOf(currentGroupKey);
+                if (currentGroupIdx < keys.length - 1) {
+                    document.getElementById("passage-select").value = keys[currentGroupIdx + 1];
+                    changePassage();
+                } else {
+                    document.getElementById("complete-all-modal").classList.remove("hidden");
+                }
+            }
+        }
+
+        function restartFromBeginning() {
+            document.getElementById("complete-all-modal").classList.add("hidden");
+            initApp();
+        }
+    </script>
+</body>
+</html>
