@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <!-- PWA 및 iOS 모바일 설정 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="시몬지파 서대문 교회 성구 암송">
+    <meta name="apple-mobile-web-app-title" content="성구 암송">
     <meta name="theme-color" content="#4338ca">
     <title>성구 암송 PWA</title>
     
+    <!-- PWA 아이콘 등록 -->
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3389/3389081.png">
     
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Noto Sans KR) -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=300;400;500;700;900&display=swap" rel="stylesheet">
     
     <style>
@@ -35,6 +39,7 @@
 </head>
 <body class="bg-slate-50">
 
+    <!-- 1. 비밀번호 입력 화면 -->
     <div id="login-screen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center border border-slate-100">
             <div class="inline-flex p-4 bg-indigo-50 rounded-full text-indigo-600 mb-4">
@@ -59,6 +64,7 @@
         </div>
     </div>
 
+    <!-- PWA 설치 권장 팝업 배너 -->
     <div id="pwa-install-banner" class="fixed bottom-4 left-4 right-4 bg-slate-900 text-white rounded-2xl p-4 shadow-2xl z-40 hidden flex items-center justify-between border border-slate-800">
         <div class="flex items-center gap-3">
             <img src="https://cdn-icons-png.flaticon.com/512/3389/3389081.png" class="w-10 h-10 rounded-lg" alt="앱 아이콘">
@@ -73,6 +79,7 @@
         </div>
     </div>
 
+    <!-- 2. 메인 웹앱 화면 -->
     <div id="app-screen" class="hidden flex-1 flex flex-col h-full overflow-hidden">
         <header class="bg-white border-b border-slate-100 px-4 py-3.5 shrink-0">
             <div class="max-w-md mx-auto flex justify-between items-center">
@@ -86,6 +93,7 @@
         </header>
 
         <main class="flex-1 scrollable-content max-w-md w-full mx-auto p-4 flex flex-col gap-4 pb-12">
+            <!-- 대그룹 성구 선택 -->
             <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100/80">
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">암송 범위 대그룹</label>
                 <div class="relative">
@@ -100,15 +108,25 @@
                 <div id="sub-passage-tabs" class="flex flex-wrap gap-2 mt-3.5"></div>
             </div>
 
-            <div class="bg-slate-200/60 p-1 rounded-2xl flex text-[11px] font-black tracking-tight shrink-0 gap-0.5">
-                <button onclick="setMode('typing')" id="mode-btn-typing" class="flex-1 py-2.5 rounded-xl text-center transition-all bg-white text-indigo-600 shadow-sm">✍️ 타이핑</button>
-                <button onclick="setMode('josa')" id="mode-btn-josa" class="flex-1 py-2.5 rounded-xl text-center transition-all text-slate-600 hover:text-slate-900">🧩 조사</button>
-                <button onclick="setMode('eomi')" id="mode-btn-eomi" class="flex-1 py-2.5 rounded-xl text-center transition-all text-slate-600 hover:text-slate-900">🎬 어미</button>
-                <button onclick="setMode('error')" id="mode-btn-error" class="flex-1 py-2.5 rounded-xl text-center transition-all text-slate-600 hover:text-slate-900">⚡ 오류찾기</button>
-                <button onclick="setMode('select')" id="mode-btn-select" class="flex-1 py-2.5 rounded-xl text-center transition-all text-slate-600 hover:text-slate-900">⚖️ 원문판별</button>
+            <!-- 학습 모드 선택: 타이핑과 퀴즈를 분리하여 컨닝 방지 -->
+            <div class="bg-slate-200/70 rounded-2xl p-1.5 grid grid-cols-4 gap-1 shadow-inner">
+                <button onclick="setPracticeMode('typing')" id="btn-mode-typing" class="text-[11px] sm:text-xs px-2 py-3 rounded-xl font-bold transition-all active:scale-95 whitespace-nowrap">
+                    ✍️ 타이핑
+                </button>
+                <button onclick="setPracticeMode('josa')" id="btn-mode-josa" class="text-[11px] sm:text-xs px-2 py-3 rounded-xl font-bold transition-all active:scale-95 whitespace-nowrap">
+                    🧩 조사<span class="hidden sm:inline"> 퀴즈</span>
+                </button>
+                <button onclick="setPracticeMode('eomi')" id="btn-mode-eomi" class="text-[11px] sm:text-xs px-2 py-3 rounded-xl font-bold transition-all active:scale-95 whitespace-nowrap">
+                    🎬 어미<span class="hidden sm:inline"> 퀴즈</span>
+                </button>
+                <button onclick="setPracticeMode('mixed')" id="btn-mode-mixed" class="text-[11px] sm:text-xs px-2 py-3 rounded-xl font-bold transition-all active:scale-95 whitespace-nowrap">
+                    ⚖️ 혼합<span class="hidden sm:inline"> 퀴즈</span>
+                </button>
             </div>
 
-            <div id="hint-panel" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100/80 flex flex-col gap-3">
+            <section id="typing-mode-panel" class="flex flex-col gap-4">
+            <!-- 가이드 및 실시간 힌트 패널 -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100/80 flex flex-col gap-3">
                 <div class="flex justify-between items-center">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">힌트 가이드</span>
                     <div class="flex gap-1 bg-slate-100 p-1 rounded-xl">
@@ -122,46 +140,70 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100/80 flex flex-col gap-3 min-h-[18rem]">
+            <!-- 암송 타이핑 및 실시간 채점 패널 -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100/80 flex flex-col gap-3 h-auto">
                 <div class="flex justify-between items-center">
-                    <span id="interaction-title" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">실시간 입력 확인</span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">실시간 입력 확인 (띄어쓰기 및 괄호 무관)</span>
                     <span id="match-status" class="text-[10px] font-extrabold px-2.5 py-1 rounded-full transition-colors">작성 대기</span>
                 </div>
 
-                <div id="zone-typing" class="flex flex-col gap-3 flex-1">
-                    <div id="comparison-display" class="p-4 bg-white text-slate-800 border border-slate-200/80 rounded-xl h-24 overflow-y-auto text-sm sm:text-base leading-relaxed break-words whitespace-pre-wrap font-semibold tracking-wide shadow-inner">
-                        <span class="text-slate-400 text-xs font-normal">아래 입력창에 타이핑을 시작하면 실시간 분석이 표시됩니다.</span>
-                    </div>
-                    <div class="flex flex-col overflow-hidden h-32 mt-1">
-                        <textarea 
-                            id="user-input" oninput="compareText()" placeholder="이곳에 성구를 정확히 한 글자씩 타이핑하세요..." 
-                            class="w-full h-full p-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-sm sm:text-base leading-relaxed bg-slate-50 focus:bg-white transition-all text-slate-800"
-                            autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
-                        ></textarea>
-                    </div>
-                    <button onclick="clearInput()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3.5 rounded-xl transition-all active:scale-[0.98] text-xs sm:text-sm">
-                        지우고 처음부터 다시 쓰기
-                    </button>
+                <!-- 실시간 글자 분석 뷰 (가독성 높은 구버전 스타일) -->
+                <div id="comparison-display" class="p-4 bg-white text-slate-800 border border-slate-200/80 rounded-xl h-24 overflow-y-auto text-sm sm:text-base leading-relaxed break-words whitespace-pre-wrap font-semibold tracking-wide shadow-inner">
+                    <span class="text-slate-400 text-xs font-normal">아래 입력창에 타이핑을 시작하면 실시간 분석이 표시됩니다.</span>
                 </div>
 
-                <div id="zone-quiz" class="hidden flex flex-col flex-1 gap-4">
-                    <div id="quiz-sentence-box" class="p-4 bg-slate-50 border border-slate-100 rounded-2xl min-h-[6rem] flex flex-wrap items-center justify-center text-center font-bold text-slate-800 text-sm sm:text-base leading-relaxed gap-y-2">
-                    </div>
-                    
-                    <div id="quiz-options-box" class="grid grid-cols-3 gap-2 mt-auto">
-                    </div>
-
-                    <div id="quiz-action-box" class="mt-2">
-                    </div>
+                <div class="flex flex-col overflow-hidden h-32 mt-1">
+                    <textarea 
+                        id="user-input" oninput="compareText()" placeholder="이곳에 성구를 정확히 한 글자씩 타이핑하세요..." 
+                        class="w-full h-full p-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-sm sm:text-base leading-relaxed bg-slate-50 focus:bg-white transition-all text-slate-800"
+                        autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
+                    ></textarea>
                 </div>
+
+                <button onclick="clearInput()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3.5 rounded-xl transition-all active:scale-[0.98] text-xs sm:text-sm">
+                    지우고 처음부터 다시 쓰기
+                </button>
             </div>
+
+
+            </section>
+
+            <!-- 조사/어미/단복수 원문 선택 퀴즈 패널 -->
+            <section id="quiz-mode-panel" class="hidden bg-white rounded-2xl p-4 shadow-sm border border-slate-100/80 flex flex-col gap-3">
+                <div class="flex justify-between items-center gap-2">
+                    <div>
+                        <span id="quiz-panel-title" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">조사 퀴즈</span>
+                        <p id="quiz-panel-desc" class="text-[11px] text-slate-500 mt-1">빈칸에 들어갈 개역한글 원문 표현을 고르세요.</p>
+                    </div>
+                    <span id="quiz-progress" class="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-slate-100 text-slate-500">0 / 5</span>
+                </div>
+
+
+                <div class="p-4 bg-indigo-50/70 rounded-xl border border-indigo-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <span id="quiz-ref" class="text-xs font-black text-indigo-700"></span>
+                        <span id="quiz-type" class="text-[10px] font-bold text-indigo-500 bg-white px-2 py-1 rounded-full"></span>
+                    </div>
+                    <p id="quiz-question" class="text-xs text-slate-500 mb-2"></p>
+                    <p id="quiz-context" class="text-sm sm:text-base text-slate-800 font-bold leading-relaxed break-words"></p>
+                </div>
+
+                <div id="quiz-options" class="grid gap-2"></div>
+
+                <div id="quiz-feedback" class="hidden text-xs leading-relaxed rounded-xl p-3 font-semibold"></div>
+
+                <button onclick="nextQuiz()" id="quiz-next-btn" class="hidden w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition-all active:scale-[0.98] text-xs sm:text-sm">
+                    다음 문제
+                </button>
+            </section>
         </main>
 
         <footer class="bg-white border-t border-slate-100 py-3 text-center text-[10px] text-slate-400 font-medium shrink-0">
-            계시록 암송 • 시몬지파 서대문교회 청년회
+            개역한글 성경암송 PWA • 모바일 단독 앱 지원
         </footer>
     </div>
 
+    <!-- 절 통과 성공 축하 모달 -->
     <div id="success-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white w-full max-w-xs rounded-3xl shadow-2xl p-6 text-center border border-slate-50">
             <div class="inline-flex p-3 bg-emerald-100 text-emerald-600 rounded-full mb-4">
@@ -169,14 +211,15 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                 </svg>
             </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-1">정답입니다! 🎉</h3>
-            <p class="text-xs text-slate-500 mb-5">훌륭합니다. 완벽하게 맞추셨습니다.</p>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">참 잘하셨습니다!</h3>
+            <p class="text-xs text-slate-500 mb-5">글자 틀림 없이 완벽히 맞추셨습니다.</p>
             <button onclick="closeSuccessModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl transition-all active:scale-95">
                 다음 구절 도전하기
             </button>
         </div>
     </div>
 
+    <!-- 최종 모든 구절 완독 축하 모달 -->
     <div id="complete-all-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center border border-slate-50">
             <div class="inline-flex p-4 bg-amber-100 text-amber-600 rounded-full mb-4">
@@ -186,7 +229,7 @@
             </div>
             <h3 class="text-xl font-bold text-slate-900 mb-1">🎉 모든 암송 구절 완료!</h3>
             <p class="text-xs text-slate-500 leading-relaxed mb-6">
-                선택하신 세트의 모든 구절을 정복하셨습니다!<br>
+                계시록 핵심 5개 세트 전 구절을 오타 없이 완벽하게 마스터하셨습니다!<br>
                 처음으로 이동해서 복습을 진행하시겠습니까?
             </p>
             <button onclick="restartFromBeginning()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl transition-all active:scale-95">
@@ -196,48 +239,88 @@
     </div>
 
     <script>
-        // 스마트 자동 가동 서비스 워커 구조 고도화 (v7 Engine)
+        // ⭐ [핵심 변경] 캐시 무시 및 자동 업데이트 서비스 워커 기술 엔진
         (function() {
             const manifest = {
-                "name": "성구 암송 프로그램", "short_name": "성구 암송", "start_url": ".", "display": "standalone",
-                "background_color": "#ffffff", "theme_color": "#4338ca", "orientation": "portrait",
-                "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/3389/3389081.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]
+                "name": "성구 암송 프로그램",
+                "short_name": "성구 암송",
+                "start_url": ".",
+                "display": "standalone",
+                "background_color": "#ffffff",
+                "theme_color": "#4338ca",
+                "orientation": "portrait",
+                "icons": [{
+                    "src": "https://cdn-icons-png.flaticon.com/512/3389/3389081.png",
+                    "sizes": "512x512",
+                    "type": "image/png",
+                    "purpose": "any maskable"
+                }]
             };
             const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
             const manifestLink = document.createElement('link');
-            manifestLink.setAttribute('rel', 'manifest'); manifestLink.setAttribute('href', URL.createObjectURL(manifestBlob));
+            manifestLink.setAttribute('rel', 'manifest');
+            manifestLink.setAttribute('href', URL.createObjectURL(manifestBlob));
             document.head.appendChild(manifestLink);
 
             if ('serviceWorker' in navigator) {
+                // 버전을 v6로 업데이트하면서 스마트 업데이트 로직 탑재
                 const swCode = `
-                    const CACHE_NAME = 'bible-memo-v7';
-                    self.addEventListener('install', e => { self.skipWaiting(); });
+                    const CACHE_NAME = 'bible-memo-v10';
+                    self.addEventListener('install', e => {
+                        self.skipWaiting(); // 새로운 코드 발견 시 옛날 워커를 즉시 강제 종료
+                    });
                     self.addEventListener('activate', e => {
-                        self.clients.claim();
-                        e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(key => { if(key !== CACHE_NAME) return caches.delete(key); }))));
+                        self.clients.claim(); // 즉시 제어권 확보
+                        e.waitUntil(
+                            caches.keys().then(keys => Promise.all(
+                                keys.map(key => { if(key !== CACHE_NAME) return caches.delete(key); })
+                            ))
+                        );
                     });
                     self.addEventListener('fetch', e => {
-                        e.respondWith(fetch(e.request).then(res => {
-                            const resClone = res.clone(); caches.open(CACHE_NAME).then(cache => cache.put(e.request, resClone)); return res;
-                        }).catch(() => caches.match(e.request)));
+                        // [Network-First 전략] 인터넷이 되면 실시간으로 최신 깃허브 파일을 먼저 가져옴
+                        e.respondWith(
+                            fetch(e.request)
+                                .then(res => {
+                                    const resClone = res.clone();
+                                    caches.open(CACHE_NAME).then(cache => cache.put(e.request, resClone));
+                                    return res;
+                                })
+                                .catch(() => caches.match(e.request)) // 인터넷 안 될 때만 저장된 캐시 사용
+                        );
                     });
                 `;
                 const swBlob = new Blob([swCode], {type: 'application/javascript'});
                 navigator.serviceWorker.register(URL.createObjectURL(swBlob)).then(reg => {
+                    // 서비스 워커의 업데이트가 발견되면 브라우저를 자동으로 새로고침시킴
                     reg.addEventListener('updatefound', () => {
-                        const w = reg.installing;
-                        w.addEventListener('statechange', () => { if (w.state === 'installed' && navigator.serviceWorker.controller) window.location.reload(); });
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                window.location.reload();
+                            }
+                        });
                     });
                 }).catch(() => {});
             }
         })();
 
         let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; document.getElementById('pwa-install-banner').classList.remove('hidden'); });
-        document.getElementById('pwa-install-btn')?.addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; document.getElementById('pwa-install-banner').classList.add('hidden'); } });
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('pwa-install-banner').classList.remove('hidden');
+        });
+        document.getElementById('pwa-install-btn')?.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt = null;
+                document.getElementById('pwa-install-banner').classList.add('hidden');
+            }
+        });
         function dismissPWAInstall() { document.getElementById('pwa-install-banner').classList.add('hidden'); }
 
-        // --- 💾 성구 원본 데이터 세트 ---
+        // --- 데이터베이스 ---
         const BIBLE_DATA = {
             "계 1:1-3": [
                 { ref: "계 1:1", text: "예수 그리스도의 계시라 이는 하나님이 그에게 주사 반드시 속히 될 일을 그 종들에게 보이시려고 그 천사를 그 종 요한에게 보내어 지시하신 것이라" },
@@ -246,7 +329,7 @@
             ],
             "계 7:1-4": [
                 { ref: "계 7:1", text: "이 일 후에 내가 네 천사가 땅 네 모퉁이에 선 것을 보니 땅의 사방의 바람을 붙잡아 바람으로 하여금 땅에나 바다에나 각종 나무에 불지 못하게 하더라" },
-                { ref: "계 7:2", text: "또 보매 다른 천사가 살아 계신 하나님의 인을 가지고 해 돋는 데로부터 올라와서 땅과 바다를 해롭게 할 권세를 얻은 네 천사를 향하여 큰 소리로 외쳐" },
+                { ref: "계 7:2", text: "또 보매 다른 천사가 살아계신 하나님의 인을 가지고 해 돋는 데로부터 올라와서 땅과 바다를 해롭게 할 권세를 얻은 네 천사를 향하여 큰 소리로 외쳐" },
                 { ref: "계 7:3", text: "가로되 우리가 우리 하나님의 종들의 이마에 인치기까지 땅이나 바다나 나무나 해하지 말라 하더라" },
                 { ref: "계 7:4", text: "내가 인맞은 자의 수를 들으니 이스라엘 자손의 각 지파 중에서 인맞은 자들이 십 사만 사천이니" }
             ],
@@ -256,31 +339,25 @@
             ],
             "계 20:4-6": [
                 { ref: "계 20:4", text: "또 내가 보좌들을 보니 거기 앉은 자들이 있어 심판하는 권세를 받았더라 또 내가 보니 예수의 증거와 하나님의 말씀을 인하여 목 베임을 받은 자의 영혼들과 또 짐승과 그의 우상에게 경배하지도 아니하고 이마와 손에 그의 표를 받지도 아니한 자들이 살아서 그리스도로 더불어 천년 동안 왕노릇 하니" },
-                { ref: "계 20:5", text: "（그 나머지 죽은 자들은 그 천년이 차기까지 살지 못하더라） 이는 첫째 부활이라" },
-                { ref: "계 20:6", text: "이 첫째 부활에 참예하는 자들은 복이 있고 거룩하도다 둘째 사망이 그들을 다스리는 권세가 없고 도리어 그들이 하나님과 그리스도로 제사장이 되어 천년 동안 그리스도로 더불어 왕노릇 하리라" }
+                { ref: "계 20:5", text: "(그 나머지 죽은 자들은 그 천년이 차기까지 살지 못하더라) 이는 첫째 부활이라" },
+                { ref: "계 20:6", text: "이 첫째 부활에 참예하는 자들은 복이 있고 거룩하도다 둘째 사망이 그들을 다스리는 권세가 없고 도리어 그들이 하나님과 그리스도의 제사장이 되어 천년 동안 그리스도로 더불어 왕노릇 하리라" }
             ],
             "계 22:18-19": [
                 { ref: "계 22:18", text: "내가 이 책의 예언의 말씀을 듣는 각인에게 증거하노니 만일 누구든지 이것들 외에 더하면 하나님이 이 책에 기록된 재앙들을 그에게 더하실 터이요" },
-                { ref: "계 22:19", text: "만일 누구든지 이 책의 예언의 말씀에서 제하여 버리면 하나님이 이 책에 기록된 생명나무와 및 거룩한 성에 참예함을 제하여 버리시리라" }
+                { ref: "계 22:19", text: "만일 누구든지 이 책의 예언의 말씀에서 제하여 버리면 하나님이 이 책에 기록된 생명 나무와 및 거룩한 성에 참예함을 제하여 버리시리라" }
             ]
-            // 💡 [팁] 새로운 퀴즈를 넣으실 때는 위 계 22:18-19 대괄호 닫히는 부분 뒤에 쉼표(,)를 찍고 
-            // 아래 양식처럼 똑같이 적어주시면 무제한으로 연동됩니다.
         };
-
-        // 스마트 분석용 토씨 데이터 사전 정의
-        const JOSA_POOL = ['께서', '에서', '에게', '으로', '보다', '처럼', '이', '가', '은', '는', '을', '를', '에', '의', '과', '와', '로', '도', '만'];
-        const EOMI_POOL = ['하시니라', '하셨느니라', '하였더라', '하리라', '하느니라', '하였느니라', '할찌니라', '하라시니라', '하심이니라', '하심이라', '가까움이라', '증거하였느니라', '있나니', '되더라', '하라', '느니라', '니라', '더라', '도다'];
 
         let currentGroupKey = "계 1:1-3";
         let currentSubIndex = 0;
         let currentTargetText = "";
+        let currentPracticeMode = "typing";
         let hintMode = "hide";
-        let currentMode = "typing"; 
-
-        let parsedQuizWords = [];
-        let userSelectedAnswers = [];
-        let currentlyActiveBlankIdx = 0;
-        let targetedWrongWordIdx = -1;
+        let quizMode = "josa";
+        let quizQueue = [];
+        let currentQuizIndex = 0;
+        let currentQuiz = null;
+        let quizAnswered = false;
 
         function handleLogin(event) {
             event.preventDefault();
@@ -290,350 +367,94 @@
                 initApp();
             } else {
                 document.getElementById("login-error").classList.remove("hidden");
-                document.getElementById("password-input").value = ""; document.getElementById("password-input").focus();
+                document.getElementById("password-input").value = "";
+                document.getElementById("password-input").focus();
             }
         }
 
         function logout() {
-            document.getElementById("password-input").value = ""; document.getElementById("login-error").classList.add("hidden");
-            document.getElementById("login-screen").classList.remove("hidden"); document.getElementById("app-screen").classList.add("hidden");
+            document.getElementById("password-input").value = "";
+            document.getElementById("login-error").classList.add("hidden");
+            document.getElementById("login-screen").classList.remove("hidden");
+            document.getElementById("app-screen").classList.add("hidden");
         }
 
         function initApp() {
-            const selectEl = document.getElementById("passage-select"); selectEl.innerHTML = "";
+            const selectEl = document.getElementById("passage-select");
+            selectEl.innerHTML = "";
             Object.keys(BIBLE_DATA).forEach(key => {
-                const opt = document.createElement("option"); opt.value = key; opt.textContent = key; selectEl.appendChild(opt);
+                const opt = document.createElement("option");
+                opt.value = key; opt.textContent = key;
+                selectEl.appendChild(opt);
             });
-            currentGroupKey = Object.keys(BIBLE_DATA)[0]; currentSubIndex = 0;
-            setMode('typing'); toggleHint('hide'); loadPassage();
+            currentGroupKey = Object.keys(BIBLE_DATA)[0];
+            currentSubIndex = 0;
+            currentPracticeMode = "typing";
+            toggleHint('hide');
+            loadPassage();
+            setPracticeMode('typing');
         }
 
-        function changePassage() { currentSubIndex = 0; loadPassage(); }
+        function changePassage() {
+            currentGroupKey = document.getElementById("passage-select").value;
+            currentSubIndex = 0;
+            loadPassage();
+        }
 
         function loadPassage() {
-            currentGroupKey = document.getElementById("passage-select").value;
             const passages = BIBLE_DATA[currentGroupKey];
             currentTargetText = passages[currentSubIndex].text;
 
-            const tabsContainer = document.getElementById("sub-passage-tabs"); tabsContainer.innerHTML = "";
+            const tabsContainer = document.getElementById("sub-passage-tabs");
+            tabsContainer.innerHTML = "";
             passages.forEach((p, idx) => {
-                const btn = document.createElement("button"); btn.textContent = p.ref;
+                const btn = document.createElement("button");
+                btn.textContent = p.ref;
                 btn.className = `px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 ${
                     idx === currentSubIndex ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "bg-slate-100 hover:bg-slate-200 text-slate-600"
                 }`;
                 btn.onclick = () => { currentSubIndex = idx; loadPassage(); };
                 tabsContainer.appendChild(btn);
             });
-            
+            clearInput();
             updateGuide();
-            refreshCurrentModeView();
+            if (currentPracticeMode !== "typing") {
+                startQuiz();
+            }
+            updatePracticeModeButtons();
         }
 
-        function setMode(mode) {
-            currentMode = mode;
-            ['typing', 'josa', 'eomi', 'error', 'select'].forEach(m => {
-                const b = document.getElementById('mode-btn-' + m);
-                if(m === mode) b.className = "flex-1 py-2.5 rounded-xl text-center transition-all bg-white text-indigo-600 shadow-sm";
-                else b.className = "flex-1 py-2.5 rounded-xl text-center transition-all text-slate-500 hover:text-slate-800";
+        function toggleHint(mode) {
+            hintMode = mode;
+            ['btn-hint-show', 'btn-hint-initial', 'btn-hint-hide'].forEach(id => {
+                document.getElementById(id).className = "text-xs px-3.5 py-1.5 rounded-lg font-semibold transition-all text-slate-500 hover:bg-slate-200/50";
             });
-
-            const tPanel = document.getElementById("hint-panel");
-            if (mode === 'typing') tPanel.classList.remove("hidden");
-            else tPanel.classList.add("hidden");
-
-            refreshCurrentModeView();
+            document.getElementById('btn-hint-' + mode).className = "text-xs px-3.5 py-1.5 rounded-lg font-bold transition-all bg-white text-indigo-600 shadow-sm";
+            updateGuide();
         }
 
-        function refreshCurrentModeView() {
-            const zTyping = document.getElementById("zone-typing");
-            const zQuiz = document.getElementById("zone-quiz");
-            const iTitle = document.getElementById("interaction-title");
-
-            if (currentMode === 'typing') {
-                zTyping.classList.remove("hidden"); zQuiz.classList.add("hidden");
-                iTitle.textContent = "실시간 입력 확인 (띄어쓰기 무관)";
-                clearInput();
+        function updateGuide() {
+            const text = currentTargetText;
+            const el = document.getElementById("guide-text");
+            if (hintMode === "show") {
+                el.textContent = text; el.className = "text-slate-800 font-bold leading-relaxed text-sm sm:text-base";
+            } else if (hintMode === "initial") {
+                el.textContent = getKoreanInitials(text); el.className = "text-indigo-600 font-black tracking-wider leading-relaxed text-sm sm:text-base";
             } else {
-                zTyping.classList.add("hidden"); zQuiz.classList.remove("hidden");
-                if (currentMode === 'josa') { iTitle.textContent = "조사 정밀 퀴즈"; buildBlankQuizEngine('josa'); }
-                else if (currentMode === 'eomi') { iTitle.textContent = "어미 집중 퀴즈"; buildBlankQuizEngine('eomi'); }
-                else if (currentMode === 'error') { iTitle.textContent = "토씨 오류 찾기 퀴즈"; buildErrorQuizEngine(); }
-                else if (currentMode === 'select') { iTitle.textContent = "원문 판별 퀴즈"; buildSelectCardQuizEngine(); }
+                el.textContent = "눈을 감고 머릿속으로 그리며 적어보세요!"; el.className = "text-slate-400 font-medium leading-relaxed text-xs sm:text-sm";
             }
         }
 
-        // --- 🧩 [퀴즈 엔진 1 & 2] 조사 / 어미 빈칸 매칭 생성기 ---
-        function buildBlankQuizEngine(type) {
-            const words = currentTargetText.split(' ');
-            const targetPool = type === 'josa' ? JOSA_POOL : EOMI_POOL;
-
-            parsedQuizWords = words.map(word => {
-                let clean = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()（）]/g,"");
-                let targetSuffix = "";
-                for (let s of targetPool) {
-                    if (clean.endsWith(s)) { targetSuffix = s; break; }
-                }
-                if (targetSuffix) {
-                    return {
-                        stem: word.substring(0, word.indexOf(targetSuffix)),
-                        suffix: targetSuffix,
-                        tail: word.substring(word.indexOf(targetSuffix) + targetSuffix.length),
-                        isBlank: true
-                    };
-                }
-                return { stem: word, suffix: '', tail: '', isBlank: false };
-            });
-
-            userSelectedAnswers = []; currentlyActiveBlankIdx = -1;
-            let bCount = 0;
-            parsedQuizWords.forEach(item => {
-                if (item.isBlank) {
-                    item.blankIdx = bCount;
-                    if (currentlyActiveBlankIdx === -1) currentlyActiveBlankIdx = bCount;
-                    bCount++;
-                }
-            });
-
-            resetMatchStatusText();
-            renderBlankQuizScreen(type);
-        }
-
-        function renderBlankQuizScreen(type) {
-            const sBox = document.getElementById("quiz-sentence-box");
-            let html = "";
-            
-            parsedQuizWords.forEach(item => {
-                if (item.isBlank) {
-                    const filled = userSelectedAnswers[item.blankIdx] !== undefined;
-                    const txt = filled ? userSelectedAnswers[item.blankIdx] : " __ ";
-                    const active = item.blankIdx === currentlyActiveBlankIdx;
-                    html += `<span onclick="changeActiveBlank(${item.blankIdx})" class="inline-block px-2 py-0.5 mx-0.5 rounded-lg border-b-2 font-black text-sm sm:text-base cursor-pointer transition-all ${
-                        active ? "bg-indigo-100 border-indigo-600 text-indigo-700 ring-2 ring-indigo-300" : filled ? "bg-slate-100 border-indigo-400 text-indigo-600" : "bg-slate-200 border-slate-400 text-slate-500"
-                    }">${txt}</span>${item.tail} `;
-                } else {
-                    html += `<span>${item.stem}</span> `;
-                }
-            });
-            sBox.innerHTML = html;
-
-            const oBox = document.getElementById("quiz-options-box"); oBox.innerHTML = "";
-            oBox.className = "grid grid-cols-3 sm:grid-cols-4 gap-2 mt-auto";
-            
-            const pool = type === 'josa' ? ['이', '가', '은', '는', '을', '를', '에', '의', '께서', '에서', '과', '와'] : ['하시니라', '하셨느니라', '하였더라', '하리라', '하느니라', '할찌니라', '하라', '있나니'];
-            pool.forEach(opt => {
-                const b = document.createElement("button");
-                b.className = "bg-white hover:bg-slate-50 active:scale-95 border border-slate-200 text-slate-700 font-bold py-3 rounded-xl text-xs sm:text-sm shadow-sm transition-all";
-                b.textContent = opt; b.onclick = () => injectWordToBlank(opt, type); oBox.appendChild(b);
-            });
-
-            const aBox = document.getElementById("quiz-action-box");
-            aBox.innerHTML = `<button onclick="verifyBlankQuizAnswers('${type}')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl text-xs sm:text-sm transition-all shadow-md">정답 확인하기</button>`;
-        }
-
-        function changeActiveBlank(idx) { currentlyActiveBlankIdx = idx; refreshBlankQuizLayoutOnly(); }
-        
-        function refreshBlankQuizLayoutOnly() {
-            const sBox = document.getElementById("quiz-sentence-box"); let html = "";
-            parsedQuizWords.forEach(item => {
-                if (item.isBlank) {
-                    const filled = userSelectedAnswers[item.blankIdx] !== undefined; const txt = filled ? userSelectedAnswers[item.blankIdx] : " __ ";
-                    const active = item.blankIdx === currentlyActiveBlankIdx;
-                    html += `<span onclick="changeActiveBlank(${item.blankIdx})" class="inline-block px-2 py-0.5 mx-0.5 rounded-lg border-b-2 font-black text-sm sm:text-base cursor-pointer transition-all ${
-                        active ? "bg-indigo-100 border-indigo-600 text-indigo-700 ring-2 ring-indigo-300" : filled ? "bg-slate-100 border-indigo-400 text-indigo-600" : "bg-slate-200 border-slate-400 text-slate-500"
-                    }">${txt}</span>${item.tail} `;
-                } else { html += `<span>${item.stem}</span> `; }
-            });
-            sBox.innerHTML = html;
-        }
-
-        function injectWordToBlank(val, type) {
-            if (currentlyActiveBlankIdx === -1) return;
-            userSelectedAnswers[currentlyActiveBlankIdx] = val;
-            let total = parsedQuizWords.filter(i => i.isBlank).length;
-            currentlyActiveBlankIdx = (currentlyActiveBlankIdx + 1) % total;
-            renderBlankQuizScreen(type);
-        }
-
-        function verifyBlankQuizAnswers(type) {
-            let pass = true; let count = 0;
-            parsedQuizWords.forEach(item => {
-                if (item.isBlank) {
-                    if(userSelectedAnswers[item.blankIdx] !== item.suffix) pass = false;
-                    count++;
-                }
-            });
-            const status = document.getElementById("match-status");
-            if (pass && count > 0) {
-                status.textContent = "만점 통과!"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                showSuccessModal();
-            } else {
-                status.textContent = "오답 감지!"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-rose-100 text-rose-600";
-                const sBox = document.getElementById("quiz-sentence-box"); let html = "";
-                parsedQuizWords.forEach(item => {
-                    if (item.isBlank) {
-                        const correct = userSelectedAnswers[item.blankIdx] === item.suffix; const txt = userSelectedAnswers[item.blankIdx] || " ? ";
-                        html += `<span onclick="changeActiveBlank(${item.blankIdx})" class="inline-block px-2 py-0.5 mx-0.5 rounded-lg border-b-2 font-black text-sm sm:text-base cursor-pointer transition-all ${
-                            correct ? "bg-emerald-50 border-emerald-500 text-emerald-700" : "bg-rose-50 border-rose-400 text-rose-600 ring-1 ring-rose-200"
-                        }">${txt}</span>${item.tail} `;
-                    } else { html += `<span>${item.stem}</span> `; }
-                });
-                sBox.innerHTML = html;
+        function getKoreanInitials(text) {
+            const initials = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+            let result = "";
+            for (let i = 0; i < text.length; i++) {
+                const code = text.charCodeAt(i);
+                if (code >= 44032 && code <= 55203) {
+                    result += initials[Math.floor((code - 44032) / 588)];
+                } else { result += text.charAt(i); }
             }
-        }
-
-        // --- ⚡ [퀴즈 엔진 3] 토씨 오류 찾기 생성기 (복원 완료) ---
-        function buildErrorQuizEngine() {
-            const words = currentTargetText.split(' ');
-            let list = [];
-            
-            parsedQuizWords = words.map((word, idx) => {
-                let clean = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()（）]/g,"");
-                let match = "";
-                for (let s of [...EOMI_POOL, ...JOSA_POOL]) {
-                    if (clean.endsWith(s)) { match = s; break; }
-                }
-                if (match) {
-                    list.push(idx);
-                    return { stem: word.substring(0, word.indexOf(match)), suffix: match, tail: word.substring(word.indexOf(match) + match.length), isCorrupted: false, original: word };
-                }
-                return { stem: word, suffix: '', tail: '', isCorrupted: false, original: word };
-            });
-
-            if (list.length === 0) {
-                document.getElementById("quiz-sentence-box").innerHTML = "<p class='text-slate-400 text-xs'>해당 구절은 퀴즈 구조를 지원하지 않습니다.</p>";
-                return;
-            }
-
-            targetedWrongWordIdx = list[Math.floor(Math.random() * list.length)];
-            const target = parsedQuizWords[targetedWrongWordIdx];
-            
-            let mock = "";
-            if (JOSA_POOL.includes(target.suffix)) {
-                let f = JOSA_POOL.filter(j => j !== target.suffix);
-                mock = f[Math.floor(Math.random() * f.length)];
-            } else {
-                let f = EOMI_POOL.filter(e => e !== target.suffix);
-                mock = f[Math.floor(Math.random() * f.length)];
-            }
-            target.corruptedWord = target.stem + mock + target.tail;
-            
-            resetMatchStatusText();
-            renderErrorQuizScreen();
-        }
-
-        function renderErrorQuizScreen() {
-            const sBox = document.getElementById("quiz-sentence-box");
-            let html = "";
-            parsedQuizWords.forEach((item, idx) => {
-                let displayWord = (idx === targetedWrongWordIdx) ? item.corruptedWord : item.original;
-                html += `<span onclick="verifyErrorChoice(${idx})" class="cursor-pointer hover:bg-slate-100 p-1 rounded transition-all">${displayWord}</span> `;
-            });
-            sBox.innerHTML = html;
-
-            const oBox = document.getElementById("quiz-options-box"); oBox.innerHTML = "";
-            oBox.innerHTML = `<p class="col-span-3 text-center text-xs text-slate-400 font-medium">위 성구 중에서 잘못 변형된 토씨(조사/어미)가 쓰인 단어를 손가락으로 클릭하세요.</p>`;
-            
-            const aBox = document.getElementById("quiz-action-box"); aBox.innerHTML = "";
-        }
-
-        function verifyErrorChoice(idx) {
-            const status = document.getElementById("match-status");
-            if (idx === targetedWrongWordIdx) {
-                status.textContent = "오류 발견!"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                showSuccessModal();
-            } else {
-                status.textContent = "정상 단어"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-rose-100 text-rose-600";
-            }
-        }
-
-        // --- ⚖️ [퀴즈 엔진 4] 원문 판별 퀴즈 (복원 완료) ---
-        function buildSelectCardQuizEngine() {
-            const correctText = currentTargetText;
-            let fakeText = correctText;
-            const words = correctText.split(' ');
-            let validIndices = [];
-
-            words.forEach((w, i) => {
-                for(let j of [...JOSA_POOL, ...EOMI_POOL]) {
-                    if(w.includes(j)) { validIndices.push({idx: i, suffix: j}); break; }
-                }
-            });
-            
-            if(validIndices.length > 0) {
-                let targetIdxObj = validIndices[Math.floor(Math.random() * validIndices.length)];
-                let wordToChange = words[targetIdxObj.idx];
-                let pool = JOSA_POOL.includes(targetIdxObj.suffix) ? JOSA_POOL : EOMI_POOL;
-                let alt = pool.filter(p => p !== targetIdxObj.suffix)[Math.floor(Math.random() * (pool.length - 1))];
-                words[targetIdxObj.idx] = wordToChange.replace(targetIdxObj.suffix, alt);
-                fakeText = words.join(' ');
-            } else {
-                fakeText = correctText + "니라";
-            }
-
-            const sBox = document.getElementById("quiz-sentence-box");
-            sBox.innerHTML = "<p class='text-xs text-slate-500 text-center font-medium'>아래의 두 보기 카드를 정독하고, 성경 원문문장과 완벽히 일치하는 카드를 선택하세요.</p>";
-
-            const oBox = document.getElementById("quiz-options-box"); oBox.innerHTML = "";
-            oBox.className = "flex flex-col gap-2 w-full col-span-3";
-
-            let cards = [
-                { text: correctText, isCorrect: true },
-                { text: fakeText, isCorrect: false }
-            ];
-            if(Math.random() > 0.5) cards.reverse();
-
-            cards.forEach(card => {
-                const b = document.createElement("button");
-                b.className = "w-full text-left bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold p-4 rounded-xl text-xs sm:text-sm shadow-sm transition-all leading-relaxed";
-                b.textContent = card.text;
-                b.onclick = () => {
-                    const status = document.getElementById("match-status");
-                    if(card.isCorrect) {
-                        status.textContent = "원문 확인!"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                        showSuccessModal();
-                    } else {
-                        status.textContent = "변형문 선택"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-rose-100 text-rose-600";
-                    }
-                };
-                oBox.appendChild(b);
-            });
-            
-            const aBox = document.getElementById("quiz-action-box"); aBox.innerHTML = "";
-            resetMatchStatusText();
-        }
-
-        // --- ✍️ 타이핑 및 실시간 유틸리티 시스템 로직 ---
-        function compareText() {
-            const input = document.getElementById("user-input").value;
-            const display = document.getElementById("comparison-display");
-            const status = document.getElementById("match-status");
-
-            let html = "";
-            let isMatch = true;
-
-            for (let i = 0; i < input.length; i++) {
-                if (input[i] === currentTargetText[i]) {
-                    html += `<span class="text-indigo-600">${input[i]}</span>`;
-                } else {
-                    html += `<span class="text-rose-500 bg-rose-50 underline">${input[i]}</span>`;
-                    isMatch = false;
-                }
-            }
-
-            if (input.length === 0) {
-                display.innerHTML = '<span class="text-slate-400 text-xs font-normal">아래 입력창에 타이핑을 시작하면 실시간 분석이 표시됩니다.</span>';
-                status.textContent = "작성 대기"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-slate-100 text-slate-500";
-            } else {
-                display.innerHTML = html + `<span class="text-slate-300 animate-pulse">|</span>`;
-                if (input === currentTargetText) {
-                    status.textContent = "완벽 일치!"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                    showSuccessModal();
-                } else if (isMatch) {
-                    status.textContent = "작성 중..."; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700";
-                } else {
-                    status.textContent = "오류 발견"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-rose-100 text-rose-600";
-                }
-            }
+            return result;
         }
 
         function clearInput() {
@@ -641,48 +462,68 @@
             compareText();
         }
 
-        function updateGuide() {
-            const gText = document.getElementById("guide-text");
-            if (hintMode === "show") {
-                gText.textContent = currentTargetText;
-            } else if (hintMode === "initial") {
-                gText.textContent = makeInitialConsonants(currentTargetText);
-            } else {
-                gText.textContent = "🔒 힌트가 숨겨져 있습니다. (타이핑 모드 전용)";
+        function compareText() {
+            const inputVal = document.getElementById("user-input").value;
+            const targetText = currentTargetText;
+            const display = document.getElementById("comparison-display");
+            const status = document.getElementById("match-status");
+
+            if (!inputVal) {
+                display.innerHTML = `<span class="text-slate-400 text-xs font-normal">아래 입력창에 타이핑을 시작하면 실시간 분석이 표시됩니다.</span>`;
+                status.textContent = "작성 대기";
+                status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-slate-100 text-slate-500";
+                return;
             }
-        }
 
-        function toggleHint(mode) {
-            hintMode = mode;
-            ['show', 'initial', 'hide'].forEach(m => {
-                const b = document.getElementById('btn-hint-' + m);
-                if(m === mode) b.className = "text-xs px-2.5 py-1.5 rounded-lg transition-all bg-white text-indigo-600 shadow-sm font-bold";
-                else b.className = "text-xs px-2.5 py-1.5 rounded-lg transition-all text-slate-500 hover:text-slate-800";
-            });
-            updateGuide();
-        }
+            const filterRegex = /[\s\(\)（）]/g;
+            const targetChars = [...targetText.replace(filterRegex, '')];
+            const inputChars = [...inputVal.replace(filterRegex, '')];
 
-        function makeInitialConsonants(text) {
-            const cho = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
-            let result = "";
-            for (let i = 0; i < text.length; i++) {
-                let code = text.charCodeAt(i) - 44032;
-                if (code >= 0 && code <= 11172) {
-                    result += cho[Math.floor(code / 588)];
-                } else {
-                    result += text[i];
+            let displayHTML = "";
+            let isError = false;
+            let pureUserIndex = 0;
+
+            for (let i = 0; i < targetText.length; i++) {
+                const targetChar = targetText[i];
+                if (targetChar.match(filterRegex)) {
+                    if (pureUserIndex < inputChars.length) displayHTML += escapeHTML(targetChar);
+                    continue;
+                }
+                if (pureUserIndex < inputChars.length) {
+                    const inputChar = inputChars[pureUserIndex];
+                    if (inputChar === targetChar) {
+                        displayHTML += `<span class="text-emerald-600 font-bold">${escapeHTML(targetChar)}</span>`;
+                    } else {
+                        displayHTML += `<span class="text-red-600 bg-red-50 font-bold px-0.5 rounded border-b-2 border-red-400">${escapeHTML(inputChar)}</span>`;
+                        isError = true;
+                    }
+                    pureUserIndex++;
+                } else { break; }
+            }
+
+            if (pureUserIndex < inputChars.length) {
+                isError = true;
+                while (pureUserIndex < inputChars.length) {
+                    displayHTML += `<span class="text-red-600 bg-red-50 font-bold px-0.5 rounded border-b-2 border-red-400">${escapeHTML(inputChars[pureUserIndex])}</span>`;
+                    pureUserIndex++;
                 }
             }
-            return result;
-        }
 
-        function resetMatchStatusText() {
-            const status = document.getElementById("match-status");
-            status.textContent = "작성 대기"; status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-slate-100 text-slate-500";
-        }
+            display.innerHTML = displayHTML;
 
-        function showSuccessModal() {
-            document.getElementById("success-modal").classList.remove("hidden");
+            if (isError) {
+                status.textContent = "오타 발생!";
+                status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-red-100 text-red-600";
+            } else {
+                if (inputChars.length === targetChars.length) {
+                    status.textContent = "암송 성공!";
+                    status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
+                    document.getElementById("success-modal").classList.remove("hidden");
+                } else {
+                    status.textContent = "암송 타이핑 중";
+                    status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-600";
+                }
+            }
         }
 
         function closeSuccessModal() {
@@ -693,10 +534,12 @@
                 loadPassage();
             } else {
                 const keys = Object.keys(BIBLE_DATA);
-                const currentGroupIdx = keys.indexOf(currentGroupKey);
-                if (currentGroupIdx < keys.length - 1) {
-                    document.getElementById("passage-select").value = keys[currentGroupIdx + 1];
-                    changePassage();
+                const idx = keys.indexOf(currentGroupKey);
+                if (idx < keys.length - 1) {
+                    currentGroupKey = keys[idx + 1];
+                    currentSubIndex = 0;
+                    document.getElementById("passage-select").value = currentGroupKey;
+                    loadPassage();
                 } else {
                     document.getElementById("complete-all-modal").classList.remove("hidden");
                 }
@@ -705,8 +548,2425 @@
 
         function restartFromBeginning() {
             document.getElementById("complete-all-modal").classList.add("hidden");
-            initApp();
+            currentGroupKey = Object.keys(BIBLE_DATA)[0];
+            currentSubIndex = 0;
+            document.getElementById("passage-select").value = currentGroupKey;
+            loadPassage();
         }
+
+
+
+        // --- 조사/어미/혼합 퀴즈 엔진 ---
+        // 모든 문항은 개역한글 원문을 정답으로 두고, 오답도 문맥상 자연스럽게 보이도록 직접 선별했습니다.
+        // 혼합 퀴즈는 조사/어미 탭과 같은 target 문항을 재사용하지 않으며, 단수/복수 문항을 필요한 곳에만 섞습니다.
+        const QUIZ_COUNT_PER_TYPE = 5;
+
+        const MANUAL_QUIZ_BANK = {
+            "계 1:1": {
+                        "josa": [
+                                    {
+                                                "category": "josa",
+                                                "target": "예수 그리스도의",
+                                                "answer": "예수 그리스도의",
+                                                "options": [
+                                                            "예수 그리스도의",
+                                                            "예수 그리스도에 관한",
+                                                            "예수 그리스도께로부터 온"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "이는 하나님이",
+                                                "answer": "이는 하나님이",
+                                                "options": [
+                                                            "이는 하나님이",
+                                                            "이것은 하나님께서",
+                                                            "이는 하나님으로부터"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "그에게 주사",
+                                                "answer": "그에게 주사",
+                                                "options": [
+                                                            "그에게 주사",
+                                                            "그를 위하여 주사",
+                                                            "그에게 맡기사"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "될 일을",
+                                                "answer": "될 일을",
+                                                "options": [
+                                                            "될 일을",
+                                                            "될 일들을",
+                                                            "이루어질 일을"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "그 종들에게",
+                                                "answer": "그 종들에게",
+                                                "options": [
+                                                            "그 종들에게",
+                                                            "그 종에게",
+                                                            "그 종들을 향하여"
+                                                ]
+                                    }
+                        ],
+                        "eomi": [
+                                    {
+                                                "category": "eomi",
+                                                "target": "계시라",
+                                                "answer": "계시라",
+                                                "options": [
+                                                            "계시라",
+                                                            "계시니라",
+                                                            "계시이니라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "주사",
+                                                "answer": "주사",
+                                                "options": [
+                                                            "주사",
+                                                            "주시고",
+                                                            "주셨으니"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "보이시려고",
+                                                "answer": "보이시려고",
+                                                "options": [
+                                                            "보이시려고",
+                                                            "보이시고자",
+                                                            "보이시려 하사"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "보내어",
+                                                "answer": "보내어",
+                                                "options": [
+                                                            "보내어",
+                                                            "보내사",
+                                                            "보내시고"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "지시하신 것이라",
+                                                "answer": "지시하신 것이라",
+                                                "options": [
+                                                            "지시하신 것이라",
+                                                            "알게 하신 것이라",
+                                                            "보이신 것이라"
+                                                ]
+                                    }
+                        ],
+                        "mixed": [
+                                    {
+                                                "category": "number",
+                                                "target": "그 천사를",
+                                                "answer": "그 천사를",
+                                                "options": [
+                                                            "그 천사를",
+                                                            "그 천사들을"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "요한에게",
+                                                "answer": "요한에게",
+                                                "options": [
+                                                            "요한에게",
+                                                            "요한을 향하여",
+                                                            "요한에게로"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "속히 될",
+                                                "answer": "속히 될",
+                                                "options": [
+                                                            "속히 될",
+                                                            "속히 이루어질",
+                                                            "속히 나타날"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "그 종 요한에게",
+                                                "answer": "그 종 요한에게",
+                                                "options": [
+                                                            "그 종 요한에게",
+                                                            "그 종 요한을 향하여",
+                                                            "그 종 요한에게로"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "보내어 지시하신",
+                                                "answer": "보내어 지시하신",
+                                                "options": [
+                                                            "보내어 지시하신",
+                                                            "보내사 알리신",
+                                                            "보내어 보이신"
+                                                ]
+                                    }
+                        ]
+            },
+            "계 1:2": {
+                        "josa": [
+                                    {
+                                                "category": "josa",
+                                                "target": "요한은",
+                                                "answer": "요한은",
+                                                "options": [
+                                                            "요한은",
+                                                            "요한이",
+                                                            "요한도"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "하나님의 말씀과",
+                                                "answer": "하나님의 말씀과",
+                                                "options": [
+                                                            "하나님의 말씀과",
+                                                            "하나님께서 주신 말씀과",
+                                                            "하나님에 관한 말씀과"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "예수 그리스도의 증거",
+                                                "answer": "예수 그리스도의 증거",
+                                                "options": [
+                                                            "예수 그리스도의 증거",
+                                                            "예수 그리스도에 관한 증거",
+                                                            "예수 그리스도께서 주신 증거"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "자기의 본 것을",
+                                                "answer": "자기의 본 것을",
+                                                "options": [
+                                                            "자기의 본 것을",
+                                                            "자기가 본 것을",
+                                                            "자신이 본 것을"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "본 것을",
+                                                "answer": "본 것을",
+                                                "options": [
+                                                            "본 것을",
+                                                            "본 바를",
+                                                            "보았던 것을"
+                                                ]
+                                    }
+                        ],
+                        "eomi": [
+                                    {
+                                                "category": "eomi",
+                                                "target": "본 것을 다",
+                                                "answer": "본 것을 다",
+                                                "options": [
+                                                            "본 것을 다",
+                                                            "본 바를 다",
+                                                            "보았던 것을 다"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "다 증거하였느니라",
+                                                "answer": "다 증거하였느니라",
+                                                "options": [
+                                                            "다 증거하였느니라",
+                                                            "다 증거하였더라",
+                                                            "다 증거하였노라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "증거하였느니라",
+                                                "answer": "증거하였느니라",
+                                                "options": [
+                                                            "증거하였느니라",
+                                                            "증거하였더라",
+                                                            "증거하였노라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "곧 자기의 본 것을",
+                                                "answer": "곧 자기의 본 것을",
+                                                "options": [
+                                                            "곧 자기의 본 것을",
+                                                            "곧 자기가 본 바를",
+                                                            "곧 자신이 보았던 것을"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "자기의 본 것을 다",
+                                                "answer": "자기의 본 것을 다",
+                                                "options": [
+                                                            "자기의 본 것을 다",
+                                                            "자기가 본 바를 다",
+                                                            "자신이 보았던 것을 다"
+                                                ]
+                                    }
+                        ],
+                        "mixed": [
+                                    {
+                                                "category": "josa",
+                                                "target": "하나님의 말씀과 예수 그리스도의 증거",
+                                                "answer": "하나님의 말씀과 예수 그리스도의 증거",
+                                                "options": [
+                                                            "하나님의 말씀과 예수 그리스도의 증거",
+                                                            "하나님의 말씀 및 예수 그리스도의 증거",
+                                                            "하나님의 말씀과 예수 그리스도에 관한 증거"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "말씀과 예수 그리스도의",
+                                                "answer": "말씀과 예수 그리스도의",
+                                                "options": [
+                                                            "말씀과 예수 그리스도의",
+                                                            "말씀 및 예수 그리스도의",
+                                                            "말씀과 예수 그리스도에 관한"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "곧",
+                                                "answer": "곧",
+                                                "options": [
+                                                            "곧",
+                                                            "즉",
+                                                            "바로"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "자기의 본",
+                                                "answer": "자기의 본",
+                                                "options": [
+                                                            "자기의 본",
+                                                            "자기가 본",
+                                                            "자신이 본"
+                                                ]
+                                    },
+                                    {
+                                                "category": "number",
+                                                "target": "말씀과",
+                                                "answer": "말씀과",
+                                                "options": [
+                                                            "말씀과",
+                                                            "말씀들과"
+                                                ]
+                                    }
+                        ]
+            },
+            "계 1:3": {
+                        "josa": [
+                                    {
+                                                "category": "josa",
+                                                "target": "이 예언의 말씀을",
+                                                "answer": "이 예언의 말씀을",
+                                                "options": [
+                                                            "이 예언의 말씀을",
+                                                            "이 예언에 관한 말씀을",
+                                                            "이 예언의 말씀에"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "읽는 자와",
+                                                "answer": "읽는 자와",
+                                                "options": [
+                                                            "읽는 자와",
+                                                            "읽는 자 및",
+                                                            "읽는 자하고"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "듣는 자들과",
+                                                "answer": "듣는 자들과",
+                                                "options": [
+                                                            "듣는 자들과",
+                                                            "듣는 자와",
+                                                            "듣는 자들 및"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "그 가운데",
+                                                "answer": "그 가운데",
+                                                "options": [
+                                                            "그 가운데",
+                                                            "그 안에",
+                                                            "그 중에"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "복이 있나니",
+                                                "answer": "복이 있나니",
+                                                "options": [
+                                                            "복이 있나니",
+                                                            "복을 받나니",
+                                                            "복이 있으니"
+                                                ]
+                                    }
+                        ],
+                        "eomi": [
+                                    {
+                                                "category": "eomi",
+                                                "target": "읽는 자와",
+                                                "answer": "읽는 자와",
+                                                "options": [
+                                                            "읽는 자와",
+                                                            "읽을 자와",
+                                                            "읽고 있는 자와"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "듣는 자들과",
+                                                "answer": "듣는 자들과",
+                                                "options": [
+                                                            "듣는 자들과",
+                                                            "들을 자들과",
+                                                            "듣고 있는 자들과"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "기록한 것을",
+                                                "answer": "기록한 것을",
+                                                "options": [
+                                                            "기록한 것을",
+                                                            "기록된 것을",
+                                                            "기록하여 둔 것을"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "지키는 자들이",
+                                                "answer": "지키는 자들이",
+                                                "options": [
+                                                            "지키는 자들이",
+                                                            "지킬 자들이",
+                                                            "지켜 행하는 자들이"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "가까움이라",
+                                                "answer": "가까움이라",
+                                                "options": [
+                                                            "가까움이라",
+                                                            "가까웠음이라",
+                                                            "가까이 있음이라"
+                                                ]
+                                    }
+                        ],
+                        "mixed": [
+                                    {
+                                                "category": "number",
+                                                "target": "지키는 자들이 복이",
+                                                "answer": "지키는 자들이 복이",
+                                                "options": [
+                                                            "지키는 자들이 복이",
+                                                            "지키는 자가 복이"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "기록한 것을 지키는",
+                                                "answer": "기록한 것을 지키는",
+                                                "options": [
+                                                            "기록한 것을 지키는",
+                                                            "기록한 바를 지키는",
+                                                            "기록한 내용들을 지키는"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "때가 가까움이라",
+                                                "answer": "때가 가까움이라",
+                                                "options": [
+                                                            "때가 가까움이라",
+                                                            "때가 가까웠음이라",
+                                                            "때가 가까이 있음이라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "자들이 복이",
+                                                "answer": "자들이 복이",
+                                                "options": [
+                                                            "자들이 복이",
+                                                            "자들에게 복이",
+                                                            "자들은 복이"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "복이 있나니 때가",
+                                                "answer": "복이 있나니 때가",
+                                                "options": [
+                                                            "복이 있나니 때가",
+                                                            "복이 있으니 때가",
+                                                            "복을 받나니 때가"
+                                                ]
+                                    }
+                        ]
+            },
+            "계 7:1": {
+                        "josa": [
+                                    {
+                                                "category": "josa",
+                                                "target": "이 일 후에",
+                                                "answer": "이 일 후에",
+                                                "options": [
+                                                            "이 일 후에",
+                                                            "이 일 뒤에",
+                                                            "이 일 다음에"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "땅 네 모퉁이에",
+                                                "answer": "땅 네 모퉁이에",
+                                                "options": [
+                                                            "땅 네 모퉁이에",
+                                                            "땅 네 모퉁이에서",
+                                                            "땅 네 모퉁이마다"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "선 것을",
+                                                "answer": "선 것을",
+                                                "options": [
+                                                            "선 것을",
+                                                            "서 있는 것을",
+                                                            "선 바를"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "땅의 사방의 바람을",
+                                                "answer": "땅의 사방의 바람을",
+                                                "options": [
+                                                            "땅의 사방의 바람을",
+                                                            "땅 사방의 바람을",
+                                                            "땅의 사방 바람을"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "땅에나 바다에나",
+                                                "answer": "땅에나 바다에나",
+                                                "options": [
+                                                            "땅에나 바다에나",
+                                                            "땅이나 바다나",
+                                                            "땅에도 바다에도"
+                                                ]
+                                    }
+                        ],
+                        "eomi": [
+                                    {
+                                                "category": "eomi",
+                                                "target": "보니",
+                                                "answer": "보니",
+                                                "options": [
+                                                            "보니",
+                                                            "보매",
+                                                            "보았더니"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "붙잡아",
+                                                "answer": "붙잡아",
+                                                "options": [
+                                                            "붙잡아",
+                                                            "붙잡고",
+                                                            "붙들어"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "하여금",
+                                                "answer": "하여금",
+                                                "options": [
+                                                            "하여금",
+                                                            "하게 하여",
+                                                            "하도록 하여"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "불지 못하게",
+                                                "answer": "불지 못하게",
+                                                "options": [
+                                                            "불지 못하게",
+                                                            "불지 못하도록",
+                                                            "불지 못하게끔"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "하더라",
+                                                "answer": "하더라",
+                                                "options": [
+                                                            "하더라",
+                                                            "하였더라",
+                                                            "하게 하더라"
+                                                ]
+                                    }
+                        ],
+                        "mixed": [
+                                    {
+                                                "category": "number",
+                                                "target": "네 천사가",
+                                                "answer": "네 천사가",
+                                                "options": [
+                                                            "네 천사가",
+                                                            "한 천사가",
+                                                            "두 천사가"
+                                                ]
+                                    },
+                                    {
+                                                "category": "number",
+                                                "target": "네 모퉁이에",
+                                                "answer": "네 모퉁이에",
+                                                "options": [
+                                                            "네 모퉁이에",
+                                                            "한 모퉁이에",
+                                                            "두 모퉁이에"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "각종 나무에",
+                                                "answer": "각종 나무에",
+                                                "options": [
+                                                            "각종 나무에",
+                                                            "각종 나무에도",
+                                                            "각종 나무까지"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "바람으로 하여금",
+                                                "answer": "바람으로 하여금",
+                                                "options": [
+                                                            "바람으로 하여금",
+                                                            "바람이 불지 못하도록",
+                                                            "바람을 막아"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "바람을 붙잡아",
+                                                "answer": "바람을 붙잡아",
+                                                "options": [
+                                                            "바람을 붙잡아",
+                                                            "바람까지 붙잡아",
+                                                            "바람도 붙잡아"
+                                                ]
+                                    }
+                        ]
+            },
+            "계 7:2": {
+                        "josa": [
+                                    {
+                                                "category": "josa",
+                                                "target": "다른 천사가",
+                                                "answer": "다른 천사가",
+                                                "options": [
+                                                            "다른 천사가",
+                                                            "다른 천사도",
+                                                            "다른 천사 하나가"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "하나님의 인을",
+                                                "answer": "하나님의 인을",
+                                                "options": [
+                                                            "하나님의 인을",
+                                                            "하나님께 속한 인을",
+                                                            "하나님이 주신 인을"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "해 돋는 데로부터",
+                                                "answer": "해 돋는 데로부터",
+                                                "options": [
+                                                            "해 돋는 데로부터",
+                                                            "해 돋는 곳으로부터",
+                                                            "해 돋는 데에서부터"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "땅과 바다를",
+                                                "answer": "땅과 바다를",
+                                                "options": [
+                                                            "땅과 바다를",
+                                                            "땅 및 바다를",
+                                                            "땅과 바다까지"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "네 천사를 향하여",
+                                                "answer": "네 천사를 향하여",
+                                                "options": [
+                                                            "네 천사를 향하여",
+                                                            "네 천사에게",
+                                                            "네 천사를 보고"
+                                                ]
+                                    }
+                        ],
+                        "eomi": [
+                                    {
+                                                "category": "eomi",
+                                                "target": "보매",
+                                                "answer": "보매",
+                                                "options": [
+                                                            "보매",
+                                                            "보니",
+                                                            "보았더니"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "살아계신",
+                                                "answer": "살아계신",
+                                                "options": [
+                                                            "살아계신",
+                                                            "살아 계시는",
+                                                            "살아 계셨던"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "가지고",
+                                                "answer": "가지고",
+                                                "options": [
+                                                            "가지고",
+                                                            "가지고서",
+                                                            "가져"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "올라와서",
+                                                "answer": "올라와서",
+                                                "options": [
+                                                            "올라와서",
+                                                            "올라와",
+                                                            "올라오며"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "외쳐",
+                                                "answer": "외쳐",
+                                                "options": [
+                                                            "외쳐",
+                                                            "외치며",
+                                                            "외치더라"
+                                                ]
+                                    }
+                        ],
+                        "mixed": [
+                                    {
+                                                "category": "number",
+                                                "target": "네 천사를",
+                                                "answer": "네 천사를",
+                                                "options": [
+                                                            "네 천사를",
+                                                            "한 천사를",
+                                                            "두 천사를"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "권세를 얻은",
+                                                "answer": "권세를 얻은",
+                                                "options": [
+                                                            "권세를 얻은",
+                                                            "권세까지 얻은",
+                                                            "권세도 얻은"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "해롭게 할",
+                                                "answer": "해롭게 할",
+                                                "options": [
+                                                            "해롭게 할",
+                                                            "해롭게 하려는",
+                                                            "해롭게 하는"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "큰 소리로",
+                                                "answer": "큰 소리로",
+                                                "options": [
+                                                            "큰 소리로",
+                                                            "큰 소리를 내어",
+                                                            "큰 소리 가운데"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "올라와서 땅과",
+                                                "answer": "올라와서 땅과",
+                                                "options": [
+                                                            "올라와서 땅과",
+                                                            "올라와 땅과",
+                                                            "올라오며 땅과"
+                                                ]
+                                    }
+                        ]
+            },
+            "계 7:3": {
+                        "josa": [
+                                    {
+                                                "category": "josa",
+                                                "target": "우리가",
+                                                "answer": "우리가",
+                                                "options": [
+                                                            "우리가",
+                                                            "우리도",
+                                                            "우리는"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "우리 하나님의",
+                                                "answer": "우리 하나님의",
+                                                "options": [
+                                                            "우리 하나님의",
+                                                            "우리 하나님께 속한",
+                                                            "우리 하나님이 택한"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "이마에",
+                                                "answer": "이마에",
+                                                "options": [
+                                                            "이마에",
+                                                            "이마 위에",
+                                                            "이마 가운데"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "땅이나 바다나",
+                                                "answer": "땅이나 바다나",
+                                                "options": [
+                                                            "땅이나 바다나",
+                                                            "땅에나 바다에나",
+                                                            "땅과 바다와"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "나무나",
+                                                "answer": "나무나",
+                                                "options": [
+                                                            "나무나",
+                                                            "나무도",
+                                                            "나무까지"
+                                                ]
+                                    }
+                        ],
+                        "eomi": [
+                                    {
+                                                "category": "eomi",
+                                                "target": "가로되",
+                                                "answer": "가로되",
+                                                "options": [
+                                                            "가로되",
+                                                            "말하되",
+                                                            "이르되"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "인치기까지",
+                                                "answer": "인치기까지",
+                                                "options": [
+                                                            "인치기까지",
+                                                            "인을 칠 때까지",
+                                                            "인치도록"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "해하지 말라",
+                                                "answer": "해하지 말라",
+                                                "options": [
+                                                            "해하지 말라",
+                                                            "해롭게 하지 말라",
+                                                            "상하게 하지 말라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "하더라",
+                                                "answer": "하더라",
+                                                "options": [
+                                                            "하더라",
+                                                            "하였더라",
+                                                            "말하더라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "말라 하더라",
+                                                "answer": "말라 하더라",
+                                                "options": [
+                                                            "말라 하더라",
+                                                            "말라 하였더라",
+                                                            "말하지 말라 하더라"
+                                                ]
+                                    }
+                        ],
+                        "mixed": [
+                                    {
+                                                "category": "number",
+                                                "target": "종들의",
+                                                "answer": "종들의",
+                                                "options": [
+                                                            "종들의",
+                                                            "종의"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "하나님의 종들의",
+                                                "answer": "하나님의 종들의",
+                                                "options": [
+                                                            "하나님의 종들의",
+                                                            "하나님께 속한 종들의",
+                                                            "하나님의 종에게"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "인치기까지 땅이나",
+                                                "answer": "인치기까지 땅이나",
+                                                "options": [
+                                                            "인치기까지 땅이나",
+                                                            "인을 칠 때까지 땅이나",
+                                                            "인치도록 땅이나"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "바다나 나무나",
+                                                "answer": "바다나 나무나",
+                                                "options": [
+                                                            "바다나 나무나",
+                                                            "바다와 나무와",
+                                                            "바다에도 나무에도"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "해하지",
+                                                "answer": "해하지",
+                                                "options": [
+                                                            "해하지",
+                                                            "해롭게 하지",
+                                                            "상하지"
+                                                ]
+                                    }
+                        ]
+            },
+            "계 7:4": {
+                        "josa": [
+                                    {
+                                                "category": "josa",
+                                                "target": "자손의 각 지파",
+                                                "answer": "자손의 각 지파",
+                                                "options": [
+                                                            "자손의 각 지파",
+                                                            "자손 가운데 각 지파",
+                                                            "자손 각 지파"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "각 지파 중에서",
+                                                "answer": "각 지파 중에서",
+                                                "options": [
+                                                            "각 지파 중에서",
+                                                            "각 지파 가운데서",
+                                                            "각 지파로부터"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "자의 수를",
+                                                "answer": "자의 수를",
+                                                "options": [
+                                                            "자의 수를",
+                                                            "자의 수가",
+                                                            "자의 수까지"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "내가 인맞은",
+                                                "answer": "내가 인맞은",
+                                                "options": [
+                                                            "내가 인맞은",
+                                                            "내가 그 인맞은",
+                                                            "내가 인 맞은"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "이스라엘 자손의",
+                                                "answer": "이스라엘 자손의",
+                                                "options": [
+                                                            "이스라엘 자손의",
+                                                            "이스라엘 자손 가운데",
+                                                            "이스라엘 자손 중"
+                                                ]
+                                    }
+                        ],
+                        "eomi": [
+                                    {
+                                                "category": "eomi",
+                                                "target": "들으니",
+                                                "answer": "들으니",
+                                                "options": [
+                                                            "들으니",
+                                                            "듣고 보니",
+                                                            "들었더니"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "인맞은",
+                                                "answer": "인맞은",
+                                                "options": [
+                                                            "인맞은",
+                                                            "인을 맞은",
+                                                            "인침 받은"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "자들이",
+                                                "answer": "자들이",
+                                                "options": [
+                                                            "자들이",
+                                                            "자들이라",
+                                                            "자들은"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "사천이니",
+                                                "answer": "사천이니",
+                                                "options": [
+                                                            "사천이니",
+                                                            "사천이라",
+                                                            "사천이더라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "수를 들으니",
+                                                "answer": "수를 들으니",
+                                                "options": [
+                                                            "수를 들으니",
+                                                            "수를 듣고 보니",
+                                                            "수를 들었더니"
+                                                ]
+                                    }
+                        ],
+                        "mixed": [
+                                    {
+                                                "category": "number",
+                                                "target": "인맞은 자들이",
+                                                "answer": "인맞은 자들이",
+                                                "options": [
+                                                            "인맞은 자들이",
+                                                            "인맞은 자가"
+                                                ]
+                                    },
+                                    {
+                                                "category": "number",
+                                                "target": "십 사만 사천이니",
+                                                "answer": "십 사만 사천이니",
+                                                "options": [
+                                                            "십 사만 사천이니",
+                                                            "십사만 사천이니",
+                                                            "십 사만 사천이라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "인맞은 자의",
+                                                "answer": "인맞은 자의",
+                                                "options": [
+                                                            "인맞은 자의",
+                                                            "인맞은 자들에 대한",
+                                                            "인맞은 자 가운데"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "중에서 인맞은",
+                                                "answer": "중에서 인맞은",
+                                                "options": [
+                                                            "중에서 인맞은",
+                                                            "중에 인맞은",
+                                                            "가운데서 인맞은"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "자손의 각",
+                                                "answer": "자손의 각",
+                                                "options": [
+                                                            "자손의 각",
+                                                            "자손 가운데 각",
+                                                            "자손 중 각"
+                                                ]
+                                    }
+                        ]
+            },
+            "계 10:10": {
+                        "josa": [
+                                    {
+                                                "category": "josa",
+                                                "target": "천사의 손에서",
+                                                "answer": "천사의 손에서",
+                                                "options": [
+                                                            "천사의 손에서",
+                                                            "천사의 손으로부터",
+                                                            "천사의 손을 통하여"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "작은 책을",
+                                                "answer": "작은 책을",
+                                                "options": [
+                                                            "작은 책을",
+                                                            "작은 책도",
+                                                            "작은 책까지"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "내 입에는",
+                                                "answer": "내 입에는",
+                                                "options": [
+                                                            "내 입에는",
+                                                            "내 입에",
+                                                            "내 입 안에는"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "내 배에서는",
+                                                "answer": "내 배에서는",
+                                                "options": [
+                                                            "내 배에서는",
+                                                            "내 배 안에서는",
+                                                            "내 배에선"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "먹은 후에",
+                                                "answer": "먹은 후에",
+                                                "options": [
+                                                            "먹은 후에",
+                                                            "먹고 난 후에",
+                                                            "먹은 뒤에"
+                                                ]
+                                    }
+                        ],
+                        "eomi": [
+                                    {
+                                                "category": "eomi",
+                                                "target": "갖다 먹어버리니",
+                                                "answer": "갖다 먹어버리니",
+                                                "options": [
+                                                            "갖다 먹어버리니",
+                                                            "가져다 먹으니",
+                                                            "받아 먹어버리니"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "꿀 같이 다나",
+                                                "answer": "꿀 같이 다나",
+                                                "options": [
+                                                            "꿀 같이 다나",
+                                                            "꿀처럼 다나",
+                                                            "꿀 같이 달았으나"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "먹은 후에",
+                                                "answer": "먹은 후에",
+                                                "options": [
+                                                            "먹은 후에",
+                                                            "먹고 난 후에",
+                                                            "먹은 뒤에"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "쓰게 되더라",
+                                                "answer": "쓰게 되더라",
+                                                "options": [
+                                                            "쓰게 되더라",
+                                                            "쓰게 되었더라",
+                                                            "쓰더라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "되더라",
+                                                "answer": "되더라",
+                                                "options": [
+                                                            "되더라",
+                                                            "되었더라",
+                                                            "되리라"
+                                                ]
+                                    }
+                        ],
+                        "mixed": [
+                                    {
+                                                "category": "josa",
+                                                "target": "내가 천사의",
+                                                "answer": "내가 천사의",
+                                                "options": [
+                                                            "내가 천사의",
+                                                            "내가 그 천사의",
+                                                            "내가 천사에게서"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "먹어버리니 내 입에는",
+                                                "answer": "먹어버리니 내 입에는",
+                                                "options": [
+                                                            "먹어버리니 내 입에는",
+                                                            "먹으니 내 입에는",
+                                                            "먹고 보니 내 입에는"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "꿀 같이",
+                                                "answer": "꿀 같이",
+                                                "options": [
+                                                            "꿀 같이",
+                                                            "꿀처럼",
+                                                            "꿀과 같이"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "다나 먹은",
+                                                "answer": "다나 먹은",
+                                                "options": [
+                                                            "다나 먹은",
+                                                            "달았으나 먹은",
+                                                            "달게 느껴졌으나 먹은"
+                                                ]
+                                    },
+                                    {
+                                                "category": "number",
+                                                "target": "작은 책을 갖다",
+                                                "answer": "작은 책을 갖다",
+                                                "options": [
+                                                            "작은 책을 갖다",
+                                                            "작은 책들을 갖다"
+                                                ]
+                                    }
+                        ]
+            },
+            "계 10:11": {
+                        "josa": [
+                                    {
+                                                "category": "josa",
+                                                "target": "저가 내게",
+                                                "answer": "저가 내게",
+                                                "options": [
+                                                            "저가 내게",
+                                                            "저가 나에게",
+                                                            "그가 내게"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "많은 백성과",
+                                                "answer": "많은 백성과",
+                                                "options": [
+                                                            "많은 백성과",
+                                                            "많은 백성 및",
+                                                            "많은 백성에게"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "나라와 방언과",
+                                                "answer": "나라와 방언과",
+                                                "options": [
+                                                            "나라와 방언과",
+                                                            "나라 및 방언과",
+                                                            "나라와 방언에게"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "임금에게",
+                                                "answer": "임금에게",
+                                                "options": [
+                                                            "임금에게",
+                                                            "임금들에게",
+                                                            "임금을 향하여"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "내게 말하기를",
+                                                "answer": "내게 말하기를",
+                                                "options": [
+                                                            "내게 말하기를",
+                                                            "내게 이르기를",
+                                                            "내게 말하여"
+                                                ]
+                                    }
+                        ],
+                        "eomi": [
+                                    {
+                                                "category": "eomi",
+                                                "target": "말하기를",
+                                                "answer": "말하기를",
+                                                "options": [
+                                                            "말하기를",
+                                                            "이르기를",
+                                                            "말하여"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "예언하여야",
+                                                "answer": "예언하여야",
+                                                "options": [
+                                                            "예언하여야",
+                                                            "예언해야",
+                                                            "예언하게"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "하리라",
+                                                "answer": "하리라",
+                                                "options": [
+                                                            "하리라",
+                                                            "하여야 하리라",
+                                                            "할 것이라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "하더라",
+                                                "answer": "하더라",
+                                                "options": [
+                                                            "하더라",
+                                                            "하였더라",
+                                                            "말하더라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "다시 예언하여야 하리라",
+                                                "answer": "다시 예언하여야 하리라",
+                                                "options": [
+                                                            "다시 예언하여야 하리라",
+                                                            "다시 예언해야 하리라",
+                                                            "다시 예언할 것이라"
+                                                ]
+                                    }
+                        ],
+                        "mixed": [
+                                    {
+                                                "category": "number",
+                                                "target": "방언과 임금에게",
+                                                "answer": "방언과 임금에게",
+                                                "options": [
+                                                            "방언과 임금에게",
+                                                            "방언과 임금들에게"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "네가 많은",
+                                                "answer": "네가 많은",
+                                                "options": [
+                                                            "네가 많은",
+                                                            "네가 그 많은",
+                                                            "너는 많은"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "방언과 임금에게 다시",
+                                                "answer": "방언과 임금에게 다시",
+                                                "options": [
+                                                            "방언과 임금에게 다시",
+                                                            "방언 및 임금에게 다시",
+                                                            "방언과 임금들을 향하여 다시"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "백성과 나라와",
+                                                "answer": "백성과 나라와",
+                                                "options": [
+                                                            "백성과 나라와",
+                                                            "백성 및 나라와",
+                                                            "백성과 나라에게"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "하여야 하리라",
+                                                "answer": "하여야 하리라",
+                                                "options": [
+                                                            "하여야 하리라",
+                                                            "해야 하리라",
+                                                            "하게 되리라"
+                                                ]
+                                    }
+                        ]
+            },
+            "계 20:4": {
+                        "josa": [
+                                    {
+                                                "category": "josa",
+                                                "target": "보좌들을 보니",
+                                                "answer": "보좌들을 보니",
+                                                "options": [
+                                                            "보좌들을 보니",
+                                                            "보좌를 보니",
+                                                            "보좌들 위를 보니"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "거기 앉은 자들이",
+                                                "answer": "거기 앉은 자들이",
+                                                "options": [
+                                                            "거기 앉은 자들이",
+                                                            "거기 앉은 자가",
+                                                            "거기에 앉은 자들이"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "예수의 증거와",
+                                                "answer": "예수의 증거와",
+                                                "options": [
+                                                            "예수의 증거와",
+                                                            "예수에 관한 증거와",
+                                                            "예수께 대한 증거와"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "말씀을 인하여",
+                                                "answer": "말씀을 인하여",
+                                                "options": [
+                                                            "말씀을 인하여",
+                                                            "말씀으로 인하여",
+                                                            "말씀 때문에"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "이마와 손에",
+                                                "answer": "이마와 손에",
+                                                "options": [
+                                                            "이마와 손에",
+                                                            "이마 및 손에",
+                                                            "이마와 손 위에"
+                                                ]
+                                    }
+                        ],
+                        "eomi": [
+                                    {
+                                                "category": "eomi",
+                                                "target": "받았더라",
+                                                "answer": "받았더라",
+                                                "options": [
+                                                            "받았더라",
+                                                            "받았느니라",
+                                                            "받게 되었더라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "목 베임을 받은",
+                                                "answer": "목 베임을 받은",
+                                                "options": [
+                                                            "목 베임을 받은",
+                                                            "목 베임을 당한",
+                                                            "목 베임 받은"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "경배하지도 아니하고",
+                                                "answer": "경배하지도 아니하고",
+                                                "options": [
+                                                            "경배하지도 아니하고",
+                                                            "경배하지 아니하고",
+                                                            "경배하지도 않았고"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "받지도 아니한",
+                                                "answer": "받지도 아니한",
+                                                "options": [
+                                                            "받지도 아니한",
+                                                            "받지 아니한",
+                                                            "받지도 않았던"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "왕노릇 하니",
+                                                "answer": "왕노릇 하니",
+                                                "options": [
+                                                            "왕노릇 하니",
+                                                            "왕노릇 하더라",
+                                                            "왕노릇 하리라"
+                                                ]
+                                    }
+                        ],
+                        "mixed": [
+                                    {
+                                                "category": "number",
+                                                "target": "보좌들을",
+                                                "answer": "보좌들을",
+                                                "options": [
+                                                            "보좌들을",
+                                                            "보좌를"
+                                                ]
+                                    },
+                                    {
+                                                "category": "number",
+                                                "target": "영혼들과",
+                                                "answer": "영혼들과",
+                                                "options": [
+                                                            "영혼들과",
+                                                            "영혼과"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "짐승과 그의 우상에게",
+                                                "answer": "짐승과 그의 우상에게",
+                                                "options": [
+                                                            "짐승과 그의 우상에게",
+                                                            "짐승 및 그의 우상에게",
+                                                            "짐승과 그의 우상을 향하여"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "살아서 그리스도로",
+                                                "answer": "살아서 그리스도로",
+                                                "options": [
+                                                            "살아서 그리스도로",
+                                                            "살아 그리스도로",
+                                                            "살아나 그리스도로"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "그리스도로 더불어",
+                                                "answer": "그리스도로 더불어",
+                                                "options": [
+                                                            "그리스도로 더불어",
+                                                            "그리스도와 더불어",
+                                                            "그리스도와 함께"
+                                                ]
+                                    }
+                        ]
+            },
+            "계 20:5": {
+                        "josa": [
+                                    {
+                                                "category": "josa",
+                                                "target": "그 나머지",
+                                                "answer": "그 나머지",
+                                                "options": [
+                                                            "그 나머지",
+                                                            "그 밖의",
+                                                            "남은"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "죽은 자들은",
+                                                "answer": "죽은 자들은",
+                                                "options": [
+                                                            "죽은 자들은",
+                                                            "죽은 자는",
+                                                            "죽은 자들도"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "그 천년이",
+                                                "answer": "그 천년이",
+                                                "options": [
+                                                            "그 천년이",
+                                                            "그 천년 동안이",
+                                                            "그 천년에는"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "차기까지",
+                                                "answer": "차기까지",
+                                                "options": [
+                                                            "차기까지",
+                                                            "차기 전까지",
+                                                            "이를 때까지"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "첫째 부활이라",
+                                                "answer": "첫째 부활이라",
+                                                "options": [
+                                                            "첫째 부활이라",
+                                                            "첫째 부활이니라",
+                                                            "첫째 부활이다"
+                                                ]
+                                    }
+                        ],
+                        "eomi": [
+                                    {
+                                                "category": "eomi",
+                                                "target": "차기까지",
+                                                "answer": "차기까지",
+                                                "options": [
+                                                            "차기까지",
+                                                            "찰 때까지",
+                                                            "차도록"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "살지 못하더라",
+                                                "answer": "살지 못하더라",
+                                                "options": [
+                                                            "살지 못하더라",
+                                                            "살지 못하였더라",
+                                                            "살지 못하느니라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "못하더라",
+                                                "answer": "못하더라",
+                                                "options": [
+                                                            "못하더라",
+                                                            "못하였더라",
+                                                            "못하리라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "이는 첫째 부활이라",
+                                                "answer": "이는 첫째 부활이라",
+                                                "options": [
+                                                            "이는 첫째 부활이라",
+                                                            "이는 첫째 부활이니라",
+                                                            "이것은 첫째 부활이라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "부활이라",
+                                                "answer": "부활이라",
+                                                "options": [
+                                                            "부활이라",
+                                                            "부활이니라",
+                                                            "부활이더라"
+                                                ]
+                                    }
+                        ],
+                        "mixed": [
+                                    {
+                                                "category": "number",
+                                                "target": "그 나머지 죽은 자들은",
+                                                "answer": "그 나머지 죽은 자들은",
+                                                "options": [
+                                                            "그 나머지 죽은 자들은",
+                                                            "그 나머지 죽은 자는"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "천년이 차기까지",
+                                                "answer": "천년이 차기까지",
+                                                "options": [
+                                                            "천년이 차기까지",
+                                                            "천년이 찰 때까지",
+                                                            "천년이 이르기까지"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "살지",
+                                                "answer": "살지",
+                                                "options": [
+                                                            "살지",
+                                                            "살아나지",
+                                                            "살아 있지"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "나머지 죽은",
+                                                "answer": "나머지 죽은",
+                                                "options": [
+                                                            "나머지 죽은",
+                                                            "나머지의 죽은",
+                                                            "남은 죽은"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "하더라) 이는",
+                                                "answer": "하더라) 이는",
+                                                "options": [
+                                                            "하더라) 이는",
+                                                            "하였더라) 이는",
+                                                            "하더라) 이것은"
+                                                ]
+                                    }
+                        ]
+            },
+            "계 20:6": {
+                        "josa": [
+                                    {
+                                                "category": "josa",
+                                                "target": "첫째 부활에",
+                                                "answer": "첫째 부활에",
+                                                "options": [
+                                                            "첫째 부활에",
+                                                            "첫째 부활 가운데",
+                                                            "첫째 부활 안에"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "자들은 복이",
+                                                "answer": "자들은 복이",
+                                                "options": [
+                                                            "자들은 복이",
+                                                            "자들에게 복이",
+                                                            "자들도 복이"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "둘째 사망이",
+                                                "answer": "둘째 사망이",
+                                                "options": [
+                                                            "둘째 사망이",
+                                                            "둘째 사망은",
+                                                            "둘째 사망도"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "그들을 다스리는",
+                                                "answer": "그들을 다스리는",
+                                                "options": [
+                                                            "그들을 다스리는",
+                                                            "그들에게 미치는",
+                                                            "그들을 지배하는"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "제사장이 되어",
+                                                "answer": "제사장이 되어",
+                                                "options": [
+                                                            "제사장이 되어",
+                                                            "제사장으로 되어",
+                                                            "제사장으로서"
+                                                ]
+                                    }
+                        ],
+                        "eomi": [
+                                    {
+                                                "category": "eomi",
+                                                "target": "참예하는",
+                                                "answer": "참예하는",
+                                                "options": [
+                                                            "참예하는",
+                                                            "참예할",
+                                                            "참여하는"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "거룩하도다",
+                                                "answer": "거룩하도다",
+                                                "options": [
+                                                            "거룩하도다",
+                                                            "거룩하니라",
+                                                            "거룩하더라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "없고",
+                                                "answer": "없고",
+                                                "options": [
+                                                            "없고",
+                                                            "없으며",
+                                                            "없으니"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "되어",
+                                                "answer": "되어",
+                                                "options": [
+                                                            "되어",
+                                                            "되고",
+                                                            "될 것이며"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "왕노릇 하리라",
+                                                "answer": "왕노릇 하리라",
+                                                "options": [
+                                                            "왕노릇 하리라",
+                                                            "왕노릇 하더라",
+                                                            "왕노릇 하리로다"
+                                                ]
+                                    }
+                        ],
+                        "mixed": [
+                                    {
+                                                "category": "number",
+                                                "target": "참예하는 자들은",
+                                                "answer": "참예하는 자들은",
+                                                "options": [
+                                                            "참예하는 자들은",
+                                                            "참예하는 자는"
+                                                ]
+                                    },
+                                    {
+                                                "category": "number",
+                                                "target": "그들이",
+                                                "answer": "그들이",
+                                                "options": [
+                                                            "그들이",
+                                                            "그가"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "하나님과 그리스도의",
+                                                "answer": "하나님과 그리스도의",
+                                                "options": [
+                                                            "하나님과 그리스도의",
+                                                            "하나님 및 그리스도의",
+                                                            "하나님과 그리스도께 속한"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "도리어 그들이",
+                                                "answer": "도리어 그들이",
+                                                "options": [
+                                                            "도리어 그들이",
+                                                            "오히려 그들이",
+                                                            "도리어 그가"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "그리스도로 더불어",
+                                                "answer": "그리스도로 더불어",
+                                                "options": [
+                                                            "그리스도로 더불어",
+                                                            "그리스도와 더불어",
+                                                            "그리스도와 함께"
+                                                ]
+                                    }
+                        ]
+            },
+            "계 22:18": {
+                        "josa": [
+                                    {
+                                                "category": "josa",
+                                                "target": "이 책의 예언의 말씀을",
+                                                "answer": "이 책의 예언의 말씀을",
+                                                "options": [
+                                                            "이 책의 예언의 말씀을",
+                                                            "이 책에 있는 예언의 말씀을",
+                                                            "이 책의 예언 말씀을"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "각인에게",
+                                                "answer": "각인에게",
+                                                "options": [
+                                                            "각인에게",
+                                                            "각 사람에게",
+                                                            "각인을 향하여"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "이것들 외에",
+                                                "answer": "이것들 외에",
+                                                "options": [
+                                                            "이것들 외에",
+                                                            "이것들 밖에",
+                                                            "이것들에 더하여"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "이 책에",
+                                                "answer": "이 책에",
+                                                "options": [
+                                                            "이 책에",
+                                                            "이 책 안에",
+                                                            "이 책 가운데"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "그에게",
+                                                "answer": "그에게",
+                                                "options": [
+                                                            "그에게",
+                                                            "그 사람에게",
+                                                            "그 위에"
+                                                ]
+                                    }
+                        ],
+                        "eomi": [
+                                    {
+                                                "category": "eomi",
+                                                "target": "듣는",
+                                                "answer": "듣는",
+                                                "options": [
+                                                            "듣는",
+                                                            "들을",
+                                                            "듣고 있는"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "증거하노니",
+                                                "answer": "증거하노니",
+                                                "options": [
+                                                            "증거하노니",
+                                                            "증거하나니",
+                                                            "증거하리니"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "더하면",
+                                                "answer": "더하면",
+                                                "options": [
+                                                            "더하면",
+                                                            "더할진대",
+                                                            "더하게 되면"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "기록된",
+                                                "answer": "기록된",
+                                                "options": [
+                                                            "기록된",
+                                                            "기록하여 둔",
+                                                            "기록한"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "더하실 터이요",
+                                                "answer": "더하실 터이요",
+                                                "options": [
+                                                            "더하실 터이요",
+                                                            "더하시리라",
+                                                            "더하실 것이요"
+                                                ]
+                                    }
+                        ],
+                        "mixed": [
+                                    {
+                                                "category": "number",
+                                                "target": "재앙들을",
+                                                "answer": "재앙들을",
+                                                "options": [
+                                                            "재앙들을",
+                                                            "재앙을"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "누구든지 이것들",
+                                                "answer": "누구든지 이것들",
+                                                "options": [
+                                                            "누구든지 이것들",
+                                                            "누구든지 이 말씀들",
+                                                            "누구든지 이 것들"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "만일 누구든지",
+                                                "answer": "만일 누구든지",
+                                                "options": [
+                                                            "만일 누구든지",
+                                                            "만약 누구든지",
+                                                            "혹 누구든지"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "말씀을 듣는",
+                                                "answer": "말씀을 듣는",
+                                                "options": [
+                                                            "말씀을 듣는",
+                                                            "말씀에 귀 기울이는",
+                                                            "말씀을 들을"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "기록된 재앙들을",
+                                                "answer": "기록된 재앙들을",
+                                                "options": [
+                                                            "기록된 재앙들을",
+                                                            "기록하여 둔 재앙들을",
+                                                            "기록한 재앙들을"
+                                                ]
+                                    }
+                        ]
+            },
+            "계 22:19": {
+                        "josa": [
+                                    {
+                                                "category": "josa",
+                                                "target": "이 책의 예언의 말씀에서",
+                                                "answer": "이 책의 예언의 말씀에서",
+                                                "options": [
+                                                            "이 책의 예언의 말씀에서",
+                                                            "이 책의 예언의 말씀으로부터",
+                                                            "이 책에 있는 예언의 말씀에서"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "생명 나무와 및",
+                                                "answer": "생명 나무와 및",
+                                                "options": [
+                                                            "생명 나무와 및",
+                                                            "생명 나무 및",
+                                                            "생명 나무와"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "거룩한 성에",
+                                                "answer": "거룩한 성에",
+                                                "options": [
+                                                            "거룩한 성에",
+                                                            "거룩한 성 안에",
+                                                            "거룩한 성 가운데"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "참예함을",
+                                                "answer": "참예함을",
+                                                "options": [
+                                                            "참예함을",
+                                                            "참여함을",
+                                                            "참예할 권리를"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "이 책에",
+                                                "answer": "이 책에",
+                                                "options": [
+                                                            "이 책에",
+                                                            "이 책 안에",
+                                                            "이 책 가운데"
+                                                ]
+                                    }
+                        ],
+                        "eomi": [
+                                    {
+                                                "category": "eomi",
+                                                "target": "제하여 버리면",
+                                                "answer": "제하여 버리면",
+                                                "options": [
+                                                            "제하여 버리면",
+                                                            "제하여 버릴진대",
+                                                            "빼어 버리면"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "기록된",
+                                                "answer": "기록된",
+                                                "options": [
+                                                            "기록된",
+                                                            "기록하여 둔",
+                                                            "기록한"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "참예함을",
+                                                "answer": "참예함을",
+                                                "options": [
+                                                            "참예함을",
+                                                            "참예하는 것을",
+                                                            "참여함을"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "제하여 버리시리라",
+                                                "answer": "제하여 버리시리라",
+                                                "options": [
+                                                            "제하여 버리시리라",
+                                                            "제하여 버리실 것이라",
+                                                            "빼어 버리시리라"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "버리시리라",
+                                                "answer": "버리시리라",
+                                                "options": [
+                                                            "버리시리라",
+                                                            "버리실 것이라",
+                                                            "버리시리로다"
+                                                ]
+                                    }
+                        ],
+                        "mixed": [
+                                    {
+                                                "category": "josa",
+                                                "target": "누구든지 이 책의",
+                                                "answer": "누구든지 이 책의",
+                                                "options": [
+                                                            "누구든지 이 책의",
+                                                            "누구든지 이 책에 있는",
+                                                            "누구든지 이 책으로부터"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "말씀에서 제하여",
+                                                "answer": "말씀에서 제하여",
+                                                "options": [
+                                                            "말씀에서 제하여",
+                                                            "말씀에서 빼어",
+                                                            "말씀 가운데서 제하여"
+                                                ]
+                                    },
+                                    {
+                                                "category": "number",
+                                                "target": "생명 나무와",
+                                                "answer": "생명 나무와",
+                                                "options": [
+                                                            "생명 나무와",
+                                                            "생명 나무들과"
+                                                ]
+                                    },
+                                    {
+                                                "category": "josa",
+                                                "target": "및 거룩한",
+                                                "answer": "및 거룩한",
+                                                "options": [
+                                                            "및 거룩한",
+                                                            "또한 거룩한",
+                                                            "그리고 거룩한"
+                                                ]
+                                    },
+                                    {
+                                                "category": "eomi",
+                                                "target": "참예함을 제하여",
+                                                "answer": "참예함을 제하여",
+                                                "options": [
+                                                            "참예함을 제하여",
+                                                            "참예할 권리를 제하여",
+                                                            "참여함을 제하여"
+                                                ]
+                                    }
+                        ]
+            }
+};
+
+        function escapeHTML(value) {
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function shuffleArray(items) {
+            const arr = [...items];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function makePhraseContextHTML(text, targetPhrase) {
+            const index = text.indexOf(targetPhrase);
+            if (index === -1) return escapeHTML(text);
+            return escapeHTML(text.slice(0, index))
+                + `<span class="inline-flex items-center px-2 py-1 rounded-lg bg-white border border-indigo-200 text-indigo-700 font-black">＿＿</span>`
+                + escapeHTML(text.slice(index + targetPhrase.length));
+        }
+
+        function getManualQuestions(passage, mode) {
+            const bank = MANUAL_QUIZ_BANK[passage.ref];
+            if (!bank || !bank[mode]) return [];
+            return bank[mode].map((item, index) => {
+                const category = mode === "mixed" ? item.category : mode;
+                return {
+                    category,
+                    ref: passage.ref,
+                    answer: item.answer,
+                    options: shuffleArray([...item.options]),
+                    question: mode === "josa"
+                        ? "빈칸에 들어갈 개역한글 원문의 조사 표현을 고르세요."
+                        : mode === "eomi"
+                            ? "빈칸에 들어갈 개역한글 원문의 어미 표현을 고르세요."
+                            : category === "number"
+                                ? "빈칸에 들어갈 개역한글 원문의 단수/복수 표현을 고르세요."
+                                : "빈칸에 들어갈 개역한글 원문 표현을 고르세요.",
+                    contextHTML: makePhraseContextHTML(passage.text, item.target),
+                    quizKey: `${passage.ref}:${mode}:${index}:${item.target}`
+                };
+            });
+        }
+
+        function buildQuizSet(passage, mode) {
+            // 문제 순서는 매번 랜덤으로 섞고, 선택지도 각 문항마다 다시 섞습니다.
+            const questions = getManualQuestions(passage, mode);
+            return shuffleArray(questions).slice(0, QUIZ_COUNT_PER_TYPE);
+        }
+
+        function setQuizMode(mode) {
+            setPracticeMode(mode);
+        }
+
+        function getPracticeModeLabel(mode) {
+            if (mode === "typing") return "타이핑";
+            if (mode === "josa") return "조사 퀴즈";
+            if (mode === "eomi") return "어미 퀴즈";
+            return "혼합 퀴즈";
+        }
+
+        function getPracticeModeDescription(mode) {
+            if (mode === "typing") return "성구를 직접 입력하며 암송 정확도를 확인합니다.";
+            if (mode === "josa") return "성구별 조사 5문항을 카드 선택 방식으로 풉니다.";
+            if (mode === "eomi") return "성구별 어미 5문항을 카드 선택 방식으로 풉니다.";
+            return "조사·어미·단수/복수 표현이 섞인 5문항을 풉니다.";
+        }
+
+        function updatePracticeModeButtons() {
+            ["typing", "josa", "eomi", "mixed"].forEach(mode => {
+                const btn = document.getElementById("btn-mode-" + mode);
+                if (!btn) return;
+                btn.className = mode === currentPracticeMode
+                    ? "text-[11px] sm:text-xs px-2 py-3 rounded-xl font-black transition-all active:scale-95 whitespace-nowrap bg-white text-indigo-600 shadow-md"
+                    : "text-[11px] sm:text-xs px-2 py-3 rounded-xl font-bold transition-all active:scale-95 whitespace-nowrap text-slate-500 hover:bg-white/50";
+            });
+        }
+
+        function setPracticeMode(mode) {
+            currentPracticeMode = mode;
+
+            const typingPanel = document.getElementById("typing-mode-panel");
+            const quizPanel = document.getElementById("quiz-mode-panel");
+            const isTyping = mode === "typing";
+
+            if (typingPanel) typingPanel.classList.toggle("hidden", !isTyping);
+            if (quizPanel) quizPanel.classList.toggle("hidden", isTyping);
+
+            if (!isTyping) {
+                quizMode = mode;
+                const title = document.getElementById("quiz-panel-title");
+                const desc = document.getElementById("quiz-panel-desc");
+                if (title) title.textContent = getPracticeModeLabel(mode);
+                if (desc) desc.textContent = getPracticeModeDescription(mode);
+                startQuiz();
+            }
+
+            updatePracticeModeButtons();
+        }
+
+        function updateQuizModeButtons() {
+            updatePracticeModeButtons();
+        }
+
+        function startQuiz() {
+            const quizBox = document.getElementById("quiz-options");
+            if (!quizBox) return;
+
+            const passage = BIBLE_DATA[currentGroupKey][currentSubIndex];
+            quizQueue = buildQuizSet(passage, quizMode);
+            currentQuizIndex = 0;
+            quizAnswered = false;
+            updatePracticeModeButtons();
+            renderQuiz();
+        }
+
+        function getQuizTypeLabel(category) {
+            if (quizMode === "mixed") {
+                if (category === "josa") return "혼합 · 조사";
+                if (category === "eomi") return "혼합 · 어미";
+                if (category === "number") return "혼합 · 단/복수";
+            }
+            if (category === "josa") return "조사";
+            if (category === "eomi") return "어미";
+            return "단/복수";
+        }
+
+        function renderQuiz() {
+            currentQuiz = quizQueue[currentQuizIndex];
+            quizAnswered = false;
+
+            document.getElementById("quiz-progress").textContent = `${currentQuizIndex + 1} / ${quizQueue.length}`;
+            document.getElementById("quiz-ref").textContent = currentQuiz.ref;
+            document.getElementById("quiz-type").textContent = getQuizTypeLabel(currentQuiz.category);
+            document.getElementById("quiz-question").textContent = currentQuiz.question;
+            document.getElementById("quiz-context").innerHTML = currentQuiz.contextHTML;
+
+            const optionsEl = document.getElementById("quiz-options");
+            optionsEl.innerHTML = "";
+
+            currentQuiz.options.forEach((option, index) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.textContent = option;
+                btn.className = "w-full text-left px-4 py-3.5 rounded-xl border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-200 text-slate-800 font-bold transition-all active:scale-[0.99]";
+                btn.onclick = () => selectQuizOption(index);
+                optionsEl.appendChild(btn);
+            });
+
+            const feedback = document.getElementById("quiz-feedback");
+            feedback.classList.add("hidden");
+            feedback.textContent = "";
+
+            const nextBtn = document.getElementById("quiz-next-btn");
+            nextBtn.classList.add("hidden");
+            nextBtn.textContent = currentQuizIndex === quizQueue.length - 1 ? "이 구절 퀴즈 다시 풀기" : "다음 문제";
+        }
+
+        function selectQuizOption(index) {
+            if (quizAnswered) return;
+            quizAnswered = true;
+
+            const selected = currentQuiz.options[index];
+            const isCorrect = selected === currentQuiz.answer;
+            const optionButtons = [...document.getElementById("quiz-options").children];
+
+            optionButtons.forEach(btn => {
+                const value = btn.textContent;
+                btn.disabled = true;
+                if (value === currentQuiz.answer) {
+                    btn.className = "w-full text-left px-4 py-3.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 font-black transition-all";
+                } else if (value === selected) {
+                    btn.className = "w-full text-left px-4 py-3.5 rounded-xl border border-red-200 bg-red-50 text-red-700 font-black transition-all";
+                } else {
+                    btn.className = "w-full text-left px-4 py-3.5 rounded-xl border border-slate-100 bg-slate-50 text-slate-400 font-semibold transition-all";
+                }
+            });
+
+            const feedback = document.getElementById("quiz-feedback");
+            feedback.classList.remove("hidden");
+            if (isCorrect) {
+                feedback.className = "text-xs leading-relaxed rounded-xl p-3 font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100";
+                feedback.textContent = '정답입니다.';
+            } else {
+                feedback.className = "text-xs leading-relaxed rounded-xl p-3 font-semibold bg-red-50 text-red-700 border border-red-100";
+                feedback.textContent = '틀렸습니다.';
+            }
+
+            document.getElementById("quiz-next-btn").classList.remove("hidden");
+        }
+
+        function nextQuiz() {
+            if (currentQuizIndex < quizQueue.length - 1) {
+                currentQuizIndex++;
+                renderQuiz();
+            } else {
+                startQuiz();
+            }
+        }
+
     </script>
 </body>
 </html>
