@@ -105,21 +105,33 @@
                         </svg>
                     </div>
                 </div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-4 mb-2">암송 범위</label>
-                <div class="relative">
-                    <select id="passage-select" onchange="changePassage()" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none cursor-pointer">
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-                        </svg>
+                <div id="practice-passage-controls">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-4 mb-2">암송 범위</label>
+                    <div class="relative">
+                        <select id="passage-select" onchange="changePassage()" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none cursor-pointer">
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                            </svg>
+                        </div>
                     </div>
+                    <div id="sub-passage-tabs" class="flex flex-wrap gap-2 mt-3.5"></div>
                 </div>
-                <div id="sub-passage-tabs" class="flex flex-wrap gap-2 mt-3.5"></div>
             </div>
 
-            <!-- 타이핑 암송 -->
-            <section id="typing-mode-panel" class="flex flex-col gap-4">
+            <!-- 연습/테스트 모드 선택 -->
+            <div class="bg-slate-200/70 rounded-2xl p-1.5 grid grid-cols-2 gap-1 shadow-inner">
+                <button type="button" id="btn-app-mode-practice" onclick="setAppMode('practice')" aria-pressed="true" class="text-xs px-3 py-3 rounded-xl font-black transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-indigo-600 shadow-md">
+                    ✍️ 연습 모드
+                </button>
+                <button type="button" id="btn-app-mode-test" onclick="setAppMode('test')" aria-pressed="false" class="text-xs px-3 py-3 rounded-xl font-bold transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-500 hover:bg-white/50">
+                    📝 테스트 모드
+                </button>
+            </div>
+
+            <!-- 타이핑 연습 -->
+            <section id="practice-mode-panel" class="flex flex-col gap-4">
             <!-- 가이드 및 실시간 힌트 패널 -->
             <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100/80 flex flex-col gap-3">
                 <div class="flex justify-between items-center">
@@ -165,6 +177,44 @@
                     지우고 처음부터 다시 쓰기
                 </button>
             </div>
+            </section>
+
+            <!-- 차수별 전체 성구 테스트 -->
+            <section id="test-mode-panel" class="hidden flex flex-col gap-4">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100/80">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">전체 성구 테스트</span>
+                            <h2 id="test-title" class="text-lg font-black text-slate-900 mt-1"></h2>
+                        </div>
+                        <span id="test-progress" class="shrink-0 text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600">0 / 0 작성</span>
+                    </div>
+                    <p id="test-description" class="text-xs text-slate-500 leading-relaxed mt-3"></p>
+                    <div class="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-100 text-[11px] leading-relaxed text-amber-700 font-semibold">
+                        테스트 중에는 힌트와 실시간 채점이 표시되지 않습니다. 모든 구절을 작성한 뒤 한 번에 제출하세요.
+                    </div>
+                </div>
+
+                <div id="test-passages" class="flex flex-col gap-3"></div>
+
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100/80 flex flex-col gap-2">
+                    <button type="button" id="test-submit-button" onclick="submitExamTest()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition-all active:scale-[0.98] text-sm">
+                        테스트 제출하기
+                    </button>
+                    <button type="button" onclick="resetExamTest()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3.5 rounded-xl transition-all active:scale-[0.98] text-xs sm:text-sm">
+                        전체 입력 지우기
+                    </button>
+                </div>
+
+                <section id="test-results" class="hidden flex flex-col gap-3" aria-live="polite">
+                    <div id="test-summary" class="rounded-2xl p-5 shadow-sm border"></div>
+                    <div id="test-result-legend" class="hidden bg-white rounded-2xl p-4 shadow-sm border border-slate-100/80 text-[11px] leading-relaxed text-slate-500">
+                        <span class="font-bold text-emerald-700">초록색</span>은 일치,
+                        <span class="font-bold text-red-700 line-through">빨간 취소선</span>은 빠진 글자,
+                        <span class="font-bold text-red-700 border-b-2 border-red-400">빨간 밑줄</span>은 잘못 쓰거나 추가한 글자입니다.
+                    </div>
+                    <div id="test-results-list" class="flex flex-col gap-3"></div>
+                </section>
             </section>
         </main>
 
@@ -345,6 +395,8 @@
         let currentTargetText = "";
         let hintMode = "hide";
         let liveCheckEnabled = true;
+        let currentAppMode = "practice";
+        let renderedTestExamKey = null;
 
         function handleLogin(event) {
             event.preventDefault();
@@ -382,6 +434,7 @@
             toggleHint('hide');
             loadPassage();
             setLiveCheck(liveCheckEnabled);
+            setAppMode('practice');
         }
 
         function getCurrentExamData() {
@@ -412,6 +465,7 @@
             document.getElementById("complete-all-modal").classList.add("hidden");
             resetToFirstPassage();
             loadPassage();
+            if (currentAppMode === "test") renderExamTest();
         }
 
         function changePassage() {
@@ -437,6 +491,220 @@
             });
             clearInput();
             updateGuide();
+        }
+
+        function setAppMode(mode) {
+            currentAppMode = mode;
+            const isTestMode = mode === "test";
+            const practiceButton = document.getElementById("btn-app-mode-practice");
+            const testButton = document.getElementById("btn-app-mode-test");
+            const activeClass = "text-xs px-3 py-3 rounded-xl font-black transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-indigo-600 shadow-md";
+            const inactiveClass = "text-xs px-3 py-3 rounded-xl font-bold transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-500 hover:bg-white/50";
+
+            document.getElementById("practice-mode-panel").classList.toggle("hidden", isTestMode);
+            document.getElementById("test-mode-panel").classList.toggle("hidden", !isTestMode);
+            document.getElementById("practice-passage-controls").classList.toggle("hidden", isTestMode);
+            practiceButton.className = isTestMode ? inactiveClass : activeClass;
+            testButton.className = isTestMode ? activeClass : inactiveClass;
+            practiceButton.setAttribute("aria-pressed", String(!isTestMode));
+            testButton.setAttribute("aria-pressed", String(isTestMode));
+
+            if (isTestMode && renderedTestExamKey !== currentExamKey) renderExamTest();
+        }
+
+        function getExamTestPassages() {
+            const passages = [];
+            Object.entries(getCurrentExamData()).forEach(([range, verses]) => {
+                verses.forEach(verse => passages.push({ range, ...verse }));
+            });
+            return passages;
+        }
+
+        function renderExamTest() {
+            const examData = getCurrentExamData();
+            const allPassages = getExamTestPassages();
+            const container = document.getElementById("test-passages");
+            container.innerHTML = "";
+            let passageIndex = 0;
+
+            document.getElementById("test-title").textContent = `${currentExamKey} 전체 테스트`;
+            document.getElementById("test-description").textContent = `${currentExamKey}의 ${allPassages.length}개 구절을 순서대로 입력합니다. 띄어쓰기와 괄호는 채점에 영향을 주지 않습니다.`;
+            document.getElementById("test-submit-button").textContent = `${currentExamKey} 제출하기`;
+
+            Object.entries(examData).forEach(([range, passages]) => {
+                const groupCard = document.createElement("div");
+                groupCard.className = "bg-white rounded-2xl p-4 shadow-sm border border-slate-100/80";
+
+                const groupTitle = document.createElement("h3");
+                groupTitle.className = "text-sm font-black text-indigo-700 mb-3";
+                groupTitle.textContent = range;
+                groupCard.appendChild(groupTitle);
+
+                const fields = document.createElement("div");
+                fields.className = "flex flex-col gap-4";
+
+                passages.forEach(passage => {
+                    const field = document.createElement("div");
+                    field.className = "flex flex-col gap-2";
+
+                    const label = document.createElement("label");
+                    label.className = "text-xs font-bold text-slate-600";
+                    label.htmlFor = `test-input-${passageIndex}`;
+                    label.textContent = passage.ref;
+
+                    const textarea = document.createElement("textarea");
+                    textarea.id = `test-input-${passageIndex}`;
+                    textarea.dataset.testIndex = String(passageIndex);
+                    textarea.rows = 5;
+                    textarea.placeholder = `${passage.ref} 본문을 입력하세요...`;
+                    textarea.className = "w-full min-h-28 p-3.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y text-sm leading-relaxed bg-slate-50 focus:bg-white transition-all text-slate-800";
+                    textarea.setAttribute("autocomplete", "off");
+                    textarea.setAttribute("autocorrect", "off");
+                    textarea.setAttribute("autocapitalize", "none");
+                    textarea.setAttribute("spellcheck", "false");
+                    textarea.addEventListener("input", handleTestInput);
+
+                    field.appendChild(label);
+                    field.appendChild(textarea);
+                    fields.appendChild(field);
+                    passageIndex++;
+                });
+
+                groupCard.appendChild(fields);
+                container.appendChild(groupCard);
+            });
+
+            renderedTestExamKey = currentExamKey;
+            hideTestResults();
+            updateTestProgress();
+        }
+
+        function handleTestInput() {
+            hideTestResults();
+            updateTestProgress();
+        }
+
+        function updateTestProgress() {
+            const inputs = [...document.querySelectorAll("[data-test-index]")];
+            const completedCount = inputs.filter(input => input.value.trim().length > 0).length;
+            document.getElementById("test-progress").textContent = `${completedCount} / ${inputs.length} 작성`;
+        }
+
+        function hideTestResults() {
+            document.getElementById("test-results").classList.add("hidden");
+            document.getElementById("test-result-legend").classList.add("hidden");
+            document.getElementById("test-summary").innerHTML = "";
+            document.getElementById("test-results-list").innerHTML = "";
+        }
+
+        function resetExamTest() {
+            renderExamTest();
+            document.getElementById("test-mode-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        function normalizeTestText(value) {
+            return String(value).replace(/[\s\(\)（）]/g, "");
+        }
+
+        function submitExamTest() {
+            const passages = getExamTestPassages();
+            const results = passages.map((passage, index) => {
+                const input = document.querySelector(`[data-test-index="${index}"]`).value;
+                return {
+                    passage,
+                    input,
+                    isCorrect: normalizeTestText(input) === normalizeTestText(passage.text)
+                };
+            });
+            const correctCount = results.filter(result => result.isCorrect).length;
+            const incorrectResults = results.filter(result => !result.isCorrect);
+            const summary = document.getElementById("test-summary");
+            const resultsList = document.getElementById("test-results-list");
+            const legend = document.getElementById("test-result-legend");
+
+            if (incorrectResults.length === 0) {
+                summary.className = "rounded-2xl p-5 shadow-sm border bg-emerald-50 border-emerald-200 text-emerald-800";
+                summary.innerHTML = `
+                    <p class="text-lg font-black">🎉 ${escapeHTML(currentExamKey)} 테스트 만점!</p>
+                    <p class="text-xs font-semibold mt-1">${results.length}개 구절을 모두 정확하게 암송했습니다.</p>
+                `;
+                legend.classList.add("hidden");
+            } else {
+                summary.className = "rounded-2xl p-5 shadow-sm border bg-amber-50 border-amber-200 text-amber-800";
+                summary.innerHTML = `
+                    <p class="text-lg font-black">채점 결과: ${correctCount} / ${results.length}구절 정답</p>
+                    <p class="text-xs font-semibold mt-1">${incorrectResults.length}개 구절에서 틀린 부분을 확인해 보세요.</p>
+                `;
+                legend.classList.remove("hidden");
+
+                incorrectResults.forEach(result => {
+                    const card = document.createElement("article");
+                    card.className = "bg-white rounded-2xl p-4 shadow-sm border border-red-100 flex flex-col gap-3";
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between gap-2">
+                            <h3 class="text-sm font-black text-slate-900">${escapeHTML(result.passage.ref)}</h3>
+                            <span class="text-[10px] font-black px-2.5 py-1 rounded-full bg-red-50 text-red-600">오답</span>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">글자 비교</p>
+                            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 text-sm leading-relaxed break-all tracking-wide">${buildTestDiffHTML(result.passage.text, result.input)}</div>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">내 입력</p>
+                            <p class="p-3.5 rounded-xl bg-red-50/60 text-sm text-slate-700 leading-relaxed break-words whitespace-pre-wrap select-text">${result.input.trim() ? escapeHTML(result.input) : '<span class="text-red-500 font-semibold">입력하지 않았습니다.</span>'}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">정답</p>
+                            <p class="p-3.5 rounded-xl bg-emerald-50/70 text-sm text-slate-800 font-semibold leading-relaxed break-words select-text">${escapeHTML(result.passage.text)}</p>
+                        </div>
+                    `;
+                    resultsList.appendChild(card);
+                });
+            }
+
+            document.getElementById("test-results").classList.remove("hidden");
+            document.getElementById("test-results").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        function buildTestDiffHTML(expectedText, actualText) {
+            const expected = [...normalizeTestText(expectedText)];
+            const actual = [...normalizeTestText(actualText)];
+            if (actual.length === 0) return '<span class="text-red-600 font-bold">입력하지 않았습니다.</span>';
+
+            const table = Array.from({ length: expected.length + 1 }, () => new Uint16Array(actual.length + 1));
+            for (let expectedIndex = expected.length - 1; expectedIndex >= 0; expectedIndex--) {
+                for (let actualIndex = actual.length - 1; actualIndex >= 0; actualIndex--) {
+                    table[expectedIndex][actualIndex] = expected[expectedIndex] === actual[actualIndex]
+                        ? table[expectedIndex + 1][actualIndex + 1] + 1
+                        : Math.max(table[expectedIndex + 1][actualIndex], table[expectedIndex][actualIndex + 1]);
+                }
+            }
+
+            let expectedIndex = 0;
+            let actualIndex = 0;
+            let html = "";
+            while (expectedIndex < expected.length && actualIndex < actual.length) {
+                if (expected[expectedIndex] === actual[actualIndex]) {
+                    html += `<span class="text-emerald-700">${escapeHTML(expected[expectedIndex])}</span>`;
+                    expectedIndex++;
+                    actualIndex++;
+                } else if (table[expectedIndex + 1][actualIndex] >= table[expectedIndex][actualIndex + 1]) {
+                    html += `<span class="text-red-700 bg-red-100 line-through decoration-2 px-0.5 rounded" title="빠진 글자">${escapeHTML(expected[expectedIndex])}</span>`;
+                    expectedIndex++;
+                } else {
+                    html += `<span class="text-red-700 bg-red-50 border-b-2 border-red-400 px-0.5" title="잘못 쓰거나 추가한 글자">${escapeHTML(actual[actualIndex])}</span>`;
+                    actualIndex++;
+                }
+            }
+            while (expectedIndex < expected.length) {
+                html += `<span class="text-red-700 bg-red-100 line-through decoration-2 px-0.5 rounded" title="빠진 글자">${escapeHTML(expected[expectedIndex])}</span>`;
+                expectedIndex++;
+            }
+            while (actualIndex < actual.length) {
+                html += `<span class="text-red-700 bg-red-50 border-b-2 border-red-400 px-0.5" title="잘못 쓰거나 추가한 글자">${escapeHTML(actual[actualIndex])}</span>`;
+                actualIndex++;
+            }
+            return html;
         }
 
         function toggleHint(mode) {
