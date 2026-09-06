@@ -389,8 +389,8 @@
             }
         };
 
-        let currentExamKey = "1차 시험";
-        let currentGroupKey = "계 1:1-3";
+        let currentExamKey = "2차 시험";
+        let currentGroupKey = "계 3:12-13";
         let currentSubIndex = 0;
         let currentTargetText = "";
         let hintMode = "hide";
@@ -428,7 +428,7 @@
                 examSelectEl.appendChild(opt);
             });
 
-            currentExamKey = Object.keys(EXAM_DATA)[0];
+            currentExamKey = "2차 시험";
             examSelectEl.value = currentExamKey;
             resetToFirstPassage();
             toggleHint('hide');
