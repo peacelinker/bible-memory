@@ -137,9 +137,15 @@
 
             <!-- 암송 타이핑 및 실시간 채점 패널 -->
             <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100/80 flex flex-col gap-3 h-auto">
-                <div class="flex justify-between items-center">
+                <div class="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">실시간 입력 확인 (띄어쓰기 및 괄호 무관)</span>
-                    <span id="match-status" class="text-[10px] font-extrabold px-2.5 py-1 rounded-full transition-colors">작성 대기</span>
+                    <div class="flex items-center justify-between gap-2 sm:justify-end">
+                        <div class="flex gap-1 bg-slate-100 p-1 rounded-xl" aria-label="실시간 확인 설정">
+                            <button type="button" id="btn-live-check-on" onclick="setLiveCheck(true)" aria-label="실시간 확인 켜기" aria-pressed="true" class="text-[10px] px-2.5 py-1 rounded-lg font-black transition-all active:scale-95 bg-white text-indigo-600 shadow-sm">ON</button>
+                            <button type="button" id="btn-live-check-off" onclick="setLiveCheck(false)" aria-label="실시간 확인 끄기" aria-pressed="false" class="text-[10px] px-2.5 py-1 rounded-lg font-black transition-all active:scale-95 text-slate-400 hover:bg-white/60">OFF</button>
+                        </div>
+                        <span id="match-status" class="text-[10px] font-extrabold px-2.5 py-1 rounded-full transition-colors">작성 대기</span>
+                    </div>
                 </div>
 
                 <!-- 실시간 글자 분석 뷰 (가독성 높은 구버전 스타일) -->
@@ -338,6 +344,7 @@
         let currentSubIndex = 0;
         let currentTargetText = "";
         let hintMode = "hide";
+        let liveCheckEnabled = true;
 
         function handleLogin(event) {
             event.preventDefault();
@@ -374,6 +381,7 @@
             resetToFirstPassage();
             toggleHint('hide');
             loadPassage();
+            setLiveCheck(liveCheckEnabled);
         }
 
         function getCurrentExamData() {
@@ -469,6 +477,20 @@
             compareText();
         }
 
+        function setLiveCheck(enabled) {
+            liveCheckEnabled = enabled;
+            const onButton = document.getElementById("btn-live-check-on");
+            const offButton = document.getElementById("btn-live-check-off");
+            const activeClass = "text-[10px] px-2.5 py-1 rounded-lg font-black transition-all active:scale-95 bg-white text-indigo-600 shadow-sm";
+            const inactiveClass = "text-[10px] px-2.5 py-1 rounded-lg font-black transition-all active:scale-95 text-slate-400 hover:bg-white/60";
+
+            onButton.className = enabled ? activeClass : inactiveClass;
+            offButton.className = enabled ? inactiveClass : activeClass;
+            onButton.setAttribute("aria-pressed", String(enabled));
+            offButton.setAttribute("aria-pressed", String(!enabled));
+            compareText();
+        }
+
         function compareText() {
             const inputVal = document.getElementById("user-input").value;
             const targetText = currentTargetText;
@@ -476,8 +498,10 @@
             const status = document.getElementById("match-status");
 
             if (!inputVal) {
-                display.innerHTML = `<span class="text-slate-400 text-xs font-normal">아래 입력창에 타이핑을 시작하면 실시간 분석이 표시됩니다.</span>`;
-                status.textContent = "작성 대기";
+                display.innerHTML = liveCheckEnabled
+                    ? `<span class="text-slate-400 text-xs font-normal">아래 입력창에 타이핑을 시작하면 실시간 분석이 표시됩니다.</span>`
+                    : `<span class="text-slate-400 text-xs font-normal">실시간 확인이 꺼져 있습니다. 암송이 완료되면 자동으로 알려드립니다.</span>`;
+                status.textContent = liveCheckEnabled ? "작성 대기" : "확인 OFF";
                 status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-slate-100 text-slate-500";
                 return;
             }
@@ -516,20 +540,23 @@
                 }
             }
 
-            display.innerHTML = displayHTML;
+            display.innerHTML = liveCheckEnabled
+                ? displayHTML
+                : `<span class="text-slate-400 text-xs font-normal">실시간 확인이 꺼져 있습니다. 암송이 완료되면 자동으로 알려드립니다.</span>`;
 
-            if (isError) {
+            if (!isError && inputChars.length === targetChars.length) {
+                status.textContent = "암송 성공!";
+                status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
+                document.getElementById("success-modal").classList.remove("hidden");
+            } else if (!liveCheckEnabled) {
+                status.textContent = "확인 OFF";
+                status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-slate-100 text-slate-500";
+            } else if (isError) {
                 status.textContent = "오타 발생!";
                 status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-red-100 text-red-600";
             } else {
-                if (inputChars.length === targetChars.length) {
-                    status.textContent = "암송 성공!";
-                    status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                    document.getElementById("success-modal").classList.remove("hidden");
-                } else {
-                    status.textContent = "암송 타이핑 중";
-                    status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-600";
-                }
+                status.textContent = "암송 타이핑 중";
+                status.className = "text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-600";
             }
         }
 
